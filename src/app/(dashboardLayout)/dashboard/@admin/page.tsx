@@ -1,22 +1,23 @@
 "use client";
 
-import { BookingsList } from "@/components/dashboard/BookingsList";
-import { StatsGrid } from "@/components/dashboard/StatsGrid";
-import { useDashboard } from "@/hooks/useDashboard";
+import { MyBookings } from "@/components/booking/MyBookings";
+import { authClient } from "@/lib/auth";
 
 export default function AdminDashboard() {
-  const { data, loading } = useDashboard();
-
+  const { data, loading } = authClient.useSession();
+  console.log(data.user.id);
   if (loading) return <p className="p-6">Loading admin stats...</p>;
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-
-      <StatsGrid stats={data.stats} />
-
-      <BookingsList title="Upcoming Bookings" list={data.upcomingBookings} />
-      <BookingsList title="Past Bookings" list={data.pastBookings} />
+      <div className="grid grid-cols-2 gap-2">
+        <MyBookings
+          userRole={data?.user.role as string}
+          userId={data.user.id}
+        />
+        <h1>Review Modal will be here</h1>
+      </div>
     </div>
   );
 }

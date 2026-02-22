@@ -26,5 +26,6 @@ export default function DashboardLayout({ admin, tutor, student }: Props) {
 
   if (role === "ADMIN") return <>{admin}</>;
   if (role === "TUTOR") return <>{tutor}</>;
-  return <>{student}</>;
+  if (role === "STUDENT") return <>{student}</>;
+  return <p className="p-6">You do not have access to this dashboard.</p>;
 }

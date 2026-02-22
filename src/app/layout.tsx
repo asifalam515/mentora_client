@@ -1,5 +1,7 @@
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/contexts/auth-context";
+import { authClient } from "@/lib/auth";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -19,11 +21,13 @@ export const metadata: Metadata = {
   description: "learn Teach and Grow From SkillBridge",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await authClient.getSession();
+  console.log("Session in RootLayout:", session);
   return (
     <html lang="en">
       <body
@@ -35,7 +39,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthProvider>{children}</AuthProvider>
+
           <Toaster richColors></Toaster>
         </ThemeProvider>
       </body>

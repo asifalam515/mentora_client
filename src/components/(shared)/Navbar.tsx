@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Roles } from "@/constants/roles";
+import { useAuth } from "@/contexts/auth-context";
 import { authClient } from "@/lib/auth";
 import {
   BarChart3,
@@ -47,9 +48,8 @@ const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { session, loading } = useAuth();
 
-  // ✅ Auth session
-  const { data: session, isPending } = authClient.useSession();
   const userData = session?.user;
 
   const user: UserData | null = userData
