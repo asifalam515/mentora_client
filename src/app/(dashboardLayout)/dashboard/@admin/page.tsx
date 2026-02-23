@@ -1,5 +1,6 @@
 "use client";
 
+import { UserManagementByAdmin } from "@/components/admin/UserManagementByAdmin";
 import { MyBookings } from "@/components/booking/MyBookings";
 import { authClient } from "@/lib/auth";
 
@@ -16,7 +17,7 @@ export default function AdminDashboard() {
           userRole={data?.user.role as string}
           userId={data.user.id}
         />
-        <h1>Review Modal will be here</h1>
+        <UserManagementByAdmin />
       </div>
     </div>
   );
