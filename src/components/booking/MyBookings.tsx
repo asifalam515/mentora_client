@@ -504,16 +504,6 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                       </Button>
                     </>
                   )}
-
-                  {/* View details button (optional) */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full ml-auto"
-                    onClick={() => router.push(`/bookings/${booking.id}`)}
-                  >
-                    Details <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
                 </CardFooter>
               </Card>
             </motion.div>

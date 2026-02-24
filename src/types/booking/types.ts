@@ -3,6 +3,7 @@ export interface Booking {
   studentId: string;
   tutorId: string;
   slotId: string;
+  role: "STUDENT" | "TUTOR" | "ADMIN";
   date: string; // ISO string
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   student?: {

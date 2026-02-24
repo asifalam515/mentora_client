@@ -117,7 +117,7 @@ const Navbar = () => {
 
   const adminNavItems = [
     {
-      href: "/admin",
+      href: "/dashboard",
       label: "Dashboard",
       icon: <BarChart3 className="h-4 w-4" />,
     },
@@ -127,7 +127,7 @@ const Navbar = () => {
       icon: <Users className="h-4 w-4" />,
     },
     {
-      href: "/admin/bookings",
+      href: "/bookings",
       label: "Bookings",
       icon: <BookOpen className="h-4 w-4" />,
     },

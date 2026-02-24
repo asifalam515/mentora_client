@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth";
+import { useAuthStore } from "@/store/auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -81,14 +82,14 @@ const LoginForm = () => {
     const toastId = toast.loading("login User");
     try {
       const { data, error } = await authClient.signIn.email(value);
-
-      console.log("login response is ", data, error);
+      console.log(data);
       if (error) {
         toast.error(error.message, { id: toastId });
         return;
       }
+      useAuthStore.getState().setAuth(data.user, data.token);
       toast.success("User Login Successfully ", { id: toastId });
-      router.refresh();
+      // router.refresh();
       router.push("/");
     } catch (error) {
       toast.error("Something Went Wrong", { id: toastId });

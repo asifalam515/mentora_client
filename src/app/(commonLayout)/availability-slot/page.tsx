@@ -7,7 +7,7 @@ const AvailabilitySlot = () => {
   if (isPending) {
     return <div>Loading...</div>;
   }
-  const userId = session?.user.id;
+  const userId = session?.user.id as string;
 
   return (
     <div>
