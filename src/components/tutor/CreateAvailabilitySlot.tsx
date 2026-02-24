@@ -107,6 +107,7 @@ const CreateAvailabilitySlot = ({ tutorId }: CreateAvailabilitySlotProps) => {
       );
       if (!response.ok) throw new Error("Failed to fetch slots");
       const data = await response.json();
+      console.log("fetched slots", data);
       setSlots(data);
     } catch (error) {
       toast.error("Error", {

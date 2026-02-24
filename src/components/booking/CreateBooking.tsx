@@ -84,7 +84,9 @@ export function CreateBooking({
     const fetchSlotDetails = async () => {
       setFetchingSlot(true);
       try {
-        const res = await fetch(`/api/availability/${slotId}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/availability/${slotId}`,
+        );
         if (!res.ok) throw new Error("Failed to fetch slot details");
         const data = await res.json();
         setSlotDetails({
@@ -115,14 +117,17 @@ export function CreateBooking({
     }
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId,
-          slotId,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId,
+            slotId,
+          }),
+        },
+      );
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || "Booking failed");

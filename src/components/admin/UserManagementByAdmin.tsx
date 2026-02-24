@@ -47,9 +47,12 @@ export function UserManagementByAdmin() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/admin/users`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/users`,
+        {
+          credentials: "include",
+        },
+      );
       if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
 
@@ -73,7 +76,7 @@ export function UserManagementByAdmin() {
     setUpdatingId(userId);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/v1/admin/users/${userId}/status`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/users/${userId}/status`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

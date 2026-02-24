@@ -5,9 +5,9 @@ import { MyBookings } from "@/components/booking/MyBookings";
 import { authClient } from "@/lib/auth";
 
 export default function AdminDashboard() {
-  const { data, loading } = authClient.useSession();
-  console.log(data.user.id);
-  if (loading) return <p className="p-6">Loading admin stats...</p>;
+  const { data, isPending } = authClient.useSession();
+  console.log(data?.user.id);
+  if (isPending) return <p className="p-6">Loading admin stats...</p>;
 
   return (
     <div className="p-6 space-y-6">

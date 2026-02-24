@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { authClient } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Award,
@@ -161,13 +162,10 @@ type AvailabilityValues = z.infer<typeof availabilitySchema>;
 type VerificationValues = z.infer<typeof verificationSchema>;
 type CompleteFormValues = z.infer<typeof completeSchema>;
 
-const BecomeTutorForm = ({
-  user,
-  categories,
-}: {
-  user: any;
-  categories: any;
-}) => {
+const BecomeTutorForm = ({ categories }: { categories: any }) => {
+  const { data: session, isPending } = authClient.useSession();
+
+  const user = session?.user;
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -289,12 +287,12 @@ const BecomeTutorForm = ({
         toast.error(error.message || "Submission failed", { id: toastId });
         throw new Error(error.message || "Submission failed");
       }
-      toast.success("Application submitted successfully!", { id: toastId });
+      toast.success(
+        "Application submitted successfully! Please create availability slot",
+        { id: toastId },
+      );
       setIsSubmitted(true);
-      // Redirect to tutor dashboard after success
-      // setTimeout(() => {
-      //   router.push("/tutor/dashboard");
-      // }, 2000);
+      redirect("/availability-slot");
     } catch (error) {
       console.log("Error ");
       console.error("Submission error:", error);
@@ -332,8 +330,11 @@ const BecomeTutorForm = ({
               days.
             </p>
             <div className="pt-4">
-              <Button onClick={() => redirect("/")} className="w-full">
-                Return to Home
+              <Button
+                onClick={() => redirect("/availability-slot")}
+                className="w-full"
+              >
+                Create Availability Slot
               </Button>
             </div>
           </CardContent>

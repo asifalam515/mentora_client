@@ -5,7 +5,8 @@ import { authClient } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
 export function useDashboard() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
+
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

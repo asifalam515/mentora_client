@@ -13,6 +13,7 @@ interface Props {
 
 export default function DashboardLayout({ admin, tutor, student }: Props) {
   const { data: session, isPending } = authClient.useSession();
+
   const router = useRouter();
 
   const role = session?.user?.role;

@@ -81,11 +81,14 @@ const LoginForm = () => {
     const toastId = toast.loading("login User");
     try {
       const { data, error } = await authClient.signIn.email(value);
+
+      console.log("login response is ", data, error);
       if (error) {
         toast.error(error.message, { id: toastId });
         return;
       }
       toast.success("User Login Successfully ", { id: toastId });
+      router.refresh();
       router.push("/");
     } catch (error) {
       toast.error("Something Went Wrong", { id: toastId });
@@ -102,7 +105,7 @@ const LoginForm = () => {
     console.log("trying to google login");
     const data = await authClient.signIn.social({
       provider: "google",
-      callbackURL: "http://localhost:3000",
+      callbackURL: window.location.origin,
     });
     console.log("data is ", data);
   };

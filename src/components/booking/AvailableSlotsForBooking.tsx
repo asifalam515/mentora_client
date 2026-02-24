@@ -40,8 +40,10 @@ const AvailableSlotsForBooking = ({
   );
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { data: session } = authClient.useSession();
-
+  const { data: session, isPending } = authClient.useSession();
+  if (isPending) {
+    return <div>Loading...</div>;
+  }
   const fetchSlots = async () => {
     setLoading(true);
     try {

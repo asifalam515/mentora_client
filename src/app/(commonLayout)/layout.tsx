@@ -10,8 +10,6 @@ export default function CommonLayout({
   return (
     <>
       <div className="container mx-auto px-4">
-        {/* Layout UI */}
-        {/* Place children where you want to render a page or nested layout */}
         <Navbar userInfo={data?.data?.user}></Navbar>
         {children}
       </div>

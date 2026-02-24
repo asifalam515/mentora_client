@@ -1,6 +1,3 @@
-import { env } from "../../env";
-
-const BACKEND_URL = env.BACKEND_URL;
 interface GetBlogParam {
   isFeatured: boolean;
   search: string;
@@ -8,7 +5,7 @@ interface GetBlogParam {
 export const tutorService = {
   getTutors: async function (params?: GetBlogParam) {
     try {
-      const url = new URL(`${BACKEND_URL}/tutor-profiles`);
+      const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles`);
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== "") {
@@ -31,7 +28,9 @@ export const tutorService = {
         return { data: null, error: "Tutor ID is required" };
       }
 
-      const url = new URL(`${BACKEND_URL}/tutor-profiles/${tutorId}`);
+      const url = new URL(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles/${tutorId}`,
+      );
 
       const res = await fetch(url.toString());
 
