@@ -3,23 +3,44 @@ interface GetBlogParam {
   search: string;
 }
 export const tutorService = {
-  getTutors: async function (params?: GetBlogParam) {
+  getTutors: async (params?: any) => {
     try {
-      const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles`);
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const url = new URL(`${baseUrl}/tutor-profiles`);
+
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            url.searchParams.append(key, value);
+          if (
+            value === undefined ||
+            value === null ||
+            value === "" ||
+            (Array.isArray(value) && value.length === 0)
+          ) {
+            return;
+          }
+
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              url.searchParams.append(key, String(v));
+            });
+          } else {
+            url.searchParams.append(key, String(value));
           }
         });
       }
 
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
 
+      if (!res.ok) throw new Error("Failed to fetch tutors");
       const data = await res.json();
-      return { data: data, error: null };
+      return { data, error: null };
     } catch (error) {
-      return { data: null, error: "something went wrong" };
+      console.error("Tutor fetch error:", error);
+      return { data: null, error: "Something went wrong" };
     }
   },
   getTutorDetails: async function (tutorId: string) {

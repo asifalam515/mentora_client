@@ -1,4 +1,4 @@
-import TutorsList from "@/components/tutor/TutorsList";
+import TutorsContainer from "@/components/tutor/TutorsContainer";
 import { tutorService } from "@/services/tutor.service";
 
 const Tutors = async () => {
@@ -9,7 +9,7 @@ const Tutors = async () => {
 
   return (
     <div>
-      <TutorsList tutors={data.tutors}></TutorsList>
+      <TutorsContainer></TutorsContainer>
     </div>
   );
 };

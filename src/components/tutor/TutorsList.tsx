@@ -28,7 +28,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SingleTutorCard from "./TutorCard";
 
 interface TutorsListProps {
@@ -49,29 +49,13 @@ interface Filters {
   minPrice: number;
   maxPrice: number;
   minRating: number;
+  sortBy?: string;
   subjects: string[];
   availability: string[];
   languages: string[];
 }
-const subject = await categoriesService.getCategories();
-const subjectsList = subject.data.data;
-
-const availabilityList = [
-  "Today",
-  "Tomorrow",
-  "This Week",
-  "Weekends",
-  "Weekdays",
-  "Evenings",
-];
-const languagesList = [
-  "English",
-  "Spanish",
-  "French",
-  "Mandarin",
-  "German",
-  "Japanese",
-];
+// const subject = await categoriesService.getCategories();
+// const subjectsList = subject.data.data;
 
 // FilterPanel component moved outside of TutorsList
 interface FilterPanelProps {
@@ -80,15 +64,26 @@ interface FilterPanelProps {
   onPriceRangeChange: (range: [number, number]) => void;
   onFilterChange: (key: keyof Filters, value: any) => void;
   onResetFilters: () => void;
+  onPriceRangeCommit?: (range: [number, number]) => void;
 }
 
 const FilterPanel = ({
   filters,
   priceRange,
   onPriceRangeChange,
+  onPriceRangeCommit,
   onFilterChange,
   onResetFilters,
 }: FilterPanelProps) => {
+  const [subjectsList, setSubjectsList] = useState<any[]>([]);
+  useEffect(() => {
+    const loadSubjects = async () => {
+      const res = await categoriesService.getCategories();
+      setSubjectsList(res.data.data);
+    };
+    loadSubjects();
+  }, []);
+
   return (
     <Card className="sticky top-24">
       <CardHeader className="pb-3">
@@ -119,7 +114,9 @@ const FilterPanel = ({
             onValueChange={(value) =>
               onPriceRangeChange(value as [number, number])
             }
-            onValueCommit={(value) => onFilterChange("maxPrice", value[1])}
+            onValueCommit={(value) =>
+              onPriceRangeCommit?.(value as [number, number])
+            }
           />
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>$0</span>
@@ -162,7 +159,7 @@ const FilterPanel = ({
                   checked={filters.subjects.includes(item.name)}
                   onCheckedChange={(checked) => {
                     const newSubjects = checked
-                      ? [...filters.subjects, subject]
+                      ? [...filters.subjects, item.name]
                       : filters.subjects.filter((s) => s !== item.name);
                     onFilterChange("subjects", newSubjects);
                   }}
@@ -174,62 +171,6 @@ const FilterPanel = ({
                   {item.name}
                 </Label>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Availability */}
-        <div className="space-y-3">
-          <Label className="font-medium">Availability</Label>
-          <div className="flex flex-wrap gap-2">
-            {availabilityList.map((availability) => (
-              <Button
-                key={availability}
-                variant={
-                  filters.availability.includes(availability)
-                    ? "default"
-                    : "outline"
-                }
-                size="sm"
-                onClick={() => {
-                  const newAvailability = filters.availability.includes(
-                    availability,
-                  )
-                    ? filters.availability.filter((a) => a !== availability)
-                    : [...filters.availability, availability];
-                  onFilterChange("availability", newAvailability);
-                }}
-              >
-                {availability}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Languages */}
-        <div className="space-y-3">
-          <Label className="font-medium">Languages</Label>
-          <div className="flex flex-wrap gap-2">
-            {languagesList.map((language) => (
-              <Button
-                key={language}
-                variant={
-                  filters.languages.includes(language) ? "default" : "outline"
-                }
-                size="sm"
-                onClick={() => {
-                  const newLanguages = filters.languages.includes(language)
-                    ? filters.languages.filter((l) => l !== language)
-                    : [...filters.languages, language];
-                  onFilterChange("languages", newLanguages);
-                }}
-              >
-                {language}
-              </Button>
             ))}
           </div>
         </div>
@@ -263,7 +204,13 @@ const TutorsList = ({
   });
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
-
+  const handlePriceRangeCommit = (range: [number, number]) => {
+    const newFilters = { ...filters, minPrice: range[0], maxPrice: range[1] };
+    setFilters(newFilters);
+    if (onFilterChange) {
+      onFilterChange(newFilters);
+    }
+  };
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -447,8 +394,6 @@ const TutorsList = ({
                   <SelectItem value="price_low">Price: Low to High</SelectItem>
                   <SelectItem value="price_high">Price: High to Low</SelectItem>
                   <SelectItem value="experience">Most Experienced</SelectItem>
-                  <SelectItem value="reviews">Most Reviews</SelectItem>
-                  <SelectItem value="students">Most Students</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -515,7 +460,8 @@ const TutorsList = ({
                 <FilterPanel
                   filters={filters}
                   priceRange={priceRange}
-                  onPriceRangeChange={setPriceRange}
+                  onPriceRangeChange={setPriceRange} // for live UI
+                  onPriceRangeCommit={handlePriceRangeCommit} // final value
                   onFilterChange={handleFilterChange}
                   onResetFilters={resetFilters}
                 />
