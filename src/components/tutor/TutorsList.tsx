@@ -43,6 +43,14 @@ interface TutorsListProps {
   showFilters?: boolean;
   layout?: "grid" | "list";
   onLayoutChange?: (layout: "grid" | "list") => void;
+  pagination?: {
+    page: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    total?: number;
+  };
+  onPageChange?: (newPage: number) => void;
 }
 
 interface Filters {
@@ -191,6 +199,8 @@ const TutorsList = ({
   showFilters = true,
   layout = "grid",
   onLayoutChange,
+  pagination,
+  onPageChange,
 }: TutorsListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("rating");
@@ -550,13 +560,34 @@ const TutorsList = ({
                 </div>
 
                 {/* Pagination Stats */}
+
                 <div className="mt-8 flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Showing {tutors.length} of many tutors</span>
+                  <span>
+                    Showing {tutors.length} of {pagination?.total || 0} tutors
+                  </span>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" disabled>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        onPageChange?.((pagination?.page || 1) - 1)
+                      }
+                      disabled={!pagination?.hasPrevPage}
+                    >
                       Previous
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <span className="text-sm">
+                      Page {pagination?.page || 1} of{" "}
+                      {pagination?.totalPages || 1}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        onPageChange?.((pagination?.page || 1) + 1)
+                      }
+                      disabled={!pagination?.hasNextPage}
+                    >
                       Next
                     </Button>
                   </div>

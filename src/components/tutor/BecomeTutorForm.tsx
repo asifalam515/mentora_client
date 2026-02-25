@@ -1,4 +1,5 @@
 "use client";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,6 @@ import {
   FileText,
   Plus,
   Sparkles,
-  Upload,
   User,
   X,
 } from "lucide-react";
@@ -53,95 +53,49 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
-// Step 1: Basic Information Schema
+// ----------------------------------------------------------------------
+// Schemas
+// ----------------------------------------------------------------------
+
+// Step 1: Basic Information (education & languages optional)
 const basicInfoSchema = z.object({
   headline: z
     .string()
     .min(5, "Headline must be at least 5 characters")
     .max(100),
   bio: z.string().min(5, "Bio must be at least 5 characters").max(2000),
-  languages: z
-    .array(z.string())
-    .min(1, "At least one language is required")
-    .optional(),
   education: z
     .array(
-      z
-        .object({
-          degree: z.string().min(2, "Degree is required").optional(),
-          institution: z.string().min(2, "Institution is required").optional(),
-          year: z
-            .string()
-            .regex(/^\d{4}$/, "Year must be a valid 4-digit year")
-            .optional(),
-        })
-        .optional(),
+      z.object({
+        degree: z.string().optional(),
+        institution: z.string().optional(),
+        year: z.string().optional(),
+      }),
     )
     .optional(),
+  languages: z.array(z.string()).optional(),
 });
 
-// Step 2: Subjects & experience Schema
+// Step 2: Subjects & Experience – subjects now store category ID
 const subjectsSchema = z.object({
   subjects: z
     .array(
       z.object({
-        id: z.string().optional(),
-        name: z.string().min(1, "Subject name is required"),
+        id: z.string().min(1, "Please select a subject"),
         rate: z.number().min(5, "Rate must be at least $5").max(500),
       }),
     )
     .min(1, "At least one subject is required"),
-  experience: z.number().min(0),
+  experience: z.number().min(0, "Experience must be a positive number"),
 });
 
-// Step 3: Availability & Pricing Schema
-const availabilitySchema = z.object({
-  pricePerHr: z.number().min(5, "Hourly rate must be at least $5").max(500),
-  availability: z
-    .array(
-      z.object({
-        day: z.enum([
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ]),
-        slots: z
-          .array(
-            z.object({
-              start: z
-                .string()
-                .regex(
-                  /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-                  "Invalid time format",
-                ),
-              end: z
-                .string()
-                .regex(
-                  /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-                  "Invalid time format",
-                ),
-            }),
-          )
-          .optional(),
-      }),
-    )
-    .optional(),
+// Step 3: Pricing
+const pricingSchema = z.object({
+  pricePerHr: z.number().min(5, "Minimum $5 per hour").max(500),
 });
 
-// Step 4: Verification Schema
+// Step 4: Verification (now only agreements, file uploads removed)
 const verificationSchema = z.object({
-  resume: z
-    .any()
-    .refine((file) => file?.size > 0, "Resume is required")
-    .optional(),
-  idDocument: z
-    .any()
-    .refine((file) => file?.size > 0, "ID document is required")
-    .optional(),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
   }),
@@ -150,53 +104,50 @@ const verificationSchema = z.object({
   }),
 });
 
-// Combined schema for all steps
+// Combined schema
 const completeSchema = basicInfoSchema
   .merge(subjectsSchema)
-  .merge(availabilitySchema)
+  .merge(pricingSchema)
   .merge(verificationSchema);
 
-type BasicInfoValues = z.infer<typeof basicInfoSchema>;
-type SubjectsValues = z.infer<typeof subjectsSchema>;
-type AvailabilityValues = z.infer<typeof availabilitySchema>;
-type VerificationValues = z.infer<typeof verificationSchema>;
+// Types
 type CompleteFormValues = z.infer<typeof completeSchema>;
 
-const BecomeTutorForm = ({ categories }: { categories: any }) => {
-  const { data: session, isPending } = authClient.useSession();
+// ----------------------------------------------------------------------
+// Component
+// ----------------------------------------------------------------------
 
+interface BecomeTutorFormProps {
+  categories: Array<{ id: string; name: string }>;
+}
+
+export default function BecomeTutorForm({ categories }: BecomeTutorFormProps) {
+  const { data: session } = authClient.useSession();
   const user = session?.user;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Initialize form
+  // --------------------------------------------------------------------
+  // Form initialization
+  // --------------------------------------------------------------------
   const form = useForm<CompleteFormValues>({
     resolver: zodResolver(completeSchema),
     defaultValues: {
       headline: "",
       bio: "",
+      education: [],
       languages: [],
-      education: [{ degree: "", institution: "", year: "" }],
-      subjects: [{ name: "", rate: 10 }],
+      subjects: [{ id: "", rate: 30 }],
       experience: 0,
-      pricePerHr: 10,
-
-      availability: [
-        { day: "Monday", slots: [] },
-        { day: "Tuesday", slots: [] },
-        { day: "Wednesday", slots: [] },
-        { day: "Thursday", slots: [] },
-        { day: "Friday", slots: [] },
-        { day: "Saturday", slots: [] },
-        { day: "Sunday", slots: [] },
-      ],
+      pricePerHr: 30,
       agreeToTerms: false,
       agreeToBackground: false,
     },
   });
 
-  const { control, handleSubmit, trigger, getValues, watch } = form;
+  const { control, handleSubmit, trigger, watch } = form;
 
   // Field arrays for dynamic inputs
   const {
@@ -217,7 +168,9 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
     name: "subjects",
   });
 
+  // --------------------------------------------------------------------
   // Steps configuration
+  // --------------------------------------------------------------------
   const steps = [
     {
       number: 1,
@@ -226,14 +179,10 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
     },
     {
       number: 2,
-      title: "Subjects & experience",
+      title: "Subjects & Experience",
       icon: <BookOpen className="h-4 w-4" />,
     },
-    {
-      number: 3,
-      title: "Availability & Pricing",
-      icon: <Clock className="h-4 w-4" />,
-    },
+    { number: 3, title: "Pricing", icon: <Clock className="h-4 w-4" /> },
     {
       number: 4,
       title: "Verification",
@@ -243,21 +192,24 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
 
   const totalSteps = steps.length;
   const progress = (currentStep / totalSteps) * 100;
-  console.log("Form values:", getValues());
+
+  // --------------------------------------------------------------------
+  // Navigation
+  // --------------------------------------------------------------------
   const handleNext = async () => {
     let isValid = false;
     switch (currentStep) {
       case 1:
-        isValid = await trigger(["headline", "bio", "languages", "education"]);
+        isValid = await trigger(["headline", "bio"]);
         break;
       case 2:
-        isValid = await trigger("subjects");
+        isValid = await trigger(["subjects", "experience"]);
         break;
       case 3:
-        isValid = await trigger(["pricePerHr", "availability"]);
+        isValid = await trigger(["pricePerHr"]);
         break;
       default:
-        break;
+        isValid = true;
     }
     if (isValid) {
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
@@ -268,53 +220,84 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const onSubmit = async (value: CompleteFormValues) => {
+  // --------------------------------------------------------------------
+  // Submission (JSON only)
+  // --------------------------------------------------------------------
+  const onSubmit = async (values: CompleteFormValues) => {
     const toastId = toast.loading("Submitting your application...");
     setIsSubmitting(true);
-    try {
-      // Simulate API call
 
-      const { data, error } = await fetch(
+    try {
+      // Clean up education: remove empty entries
+      const cleanedEducation =
+        values.education?.filter((e) => e.degree || e.institution || e.year) ||
+        [];
+
+      // Extract category IDs from subjects
+      const categoryIds = values.subjects.map((s) => s.id);
+
+      // Build payload
+      const payload = {
+        headline: values.headline,
+        bio: values.bio,
+        experience: values.experience,
+        pricePerHr: values.pricePerHr,
+        categoryIds,
+        education: cleanedEducation,
+        languages: values.languages || [],
+        agreeToTerms: values.agreeToTerms,
+        agreeToBackground: values.agreeToBackground,
+      };
+
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(value),
+          body: JSON.stringify(payload),
         },
-      ).then((res) => res.json());
-      if (error) {
-        toast.error(error.message || "Submission failed", { id: toastId });
-        throw new Error(error.message || "Submission failed");
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Submission failed");
       }
+
       toast.success(
-        "Application submitted successfully! Please create availability slot",
+        "Application submitted successfully! Please create your availability slots.",
         { id: toastId },
       );
       setIsSubmitted(true);
       redirect("/availability-slot");
-    } catch (error) {
-      console.log("Error ");
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong", { id: toastId });
       console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Preview of tutor profile (for step 1)
+  // --------------------------------------------------------------------
+  // Preview data
+  // --------------------------------------------------------------------
   const tutorPreview = {
     name: user?.name || "Your Name",
     headline: watch("headline") || "Your Headline",
     bio: watch("bio") || "Your bio will appear here...",
-    rating: 0,
-    reviews: 0,
-
     subjects: watch("subjects")
-      .map((s) => s.name)
+      .map((s) => {
+        const cat = categories.find((c) => c.id === s.id);
+        return cat?.name || "";
+      })
       .filter(Boolean),
     pricePerHr: watch("pricePerHr"),
   };
 
+  // --------------------------------------------------------------------
+  // Submitted view
+  // --------------------------------------------------------------------
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center p-4">
@@ -343,6 +326,9 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
     );
   }
 
+  // --------------------------------------------------------------------
+  // Main Form
+  // --------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-8">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -395,7 +381,11 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                   )}
                 </div>
                 <span
-                  className={`ml-2 text-sm hidden md:inline ${currentStep === step.number ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                  className={`ml-2 text-sm hidden md:inline ${
+                    currentStep === step.number
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   {step.title}
                 </span>
@@ -408,7 +398,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Form */}
+          {/* Main Form Column */}
           <div className="lg:col-span-2">
             <Card className="border-2 shadow-xl">
               <CardHeader>
@@ -417,11 +407,10 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                   {currentStep === 1 &&
                     "Tell us about yourself and your background."}
                   {currentStep === 2 &&
-                    "List the subjects you want to teach and your experience level."}
-                  {currentStep === 3 &&
-                    "Set your availability and hourly rates."}
+                    "List the subjects you want to teach and your overall experience."}
+                  {currentStep === 3 && "Set your hourly rate."}
                   {currentStep === 4 &&
-                    "Upload verification documents and agree to terms."}
+                    "Agree to the terms and background verification."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -472,17 +461,19 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                           )}
                         />
 
+                        {/* Languages (optional) */}
                         <FormField
                           control={control}
                           name="languages"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Languages you speak</FormLabel>
+                              <FormLabel>
+                                Languages you speak (optional)
+                              </FormLabel>
                               <FormControl>
                                 <Input
-                                  defaultValue="English"
-                                  placeholder="English, Spanish, etc. (comma separated)"
-                                  value={field.value?.join(", ")}
+                                  placeholder="English, Spanish, French..."
+                                  value={field.value?.join(", ") || ""}
                                   onChange={(e) =>
                                     field.onChange(
                                       e.target.value
@@ -494,17 +485,18 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                                 />
                               </FormControl>
                               <FormDescription>
-                                Enter languages separated by commas
+                                Separate languages with commas
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
 
+                        {/* Education (optional) */}
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <FormLabel className="text-base">
-                              Education
+                              Education (optional)
                             </FormLabel>
                             <Button
                               type="button"
@@ -533,7 +525,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                                 size="icon"
                                 className="absolute right-2 top-2"
                                 onClick={() => removeEducation(index)}
-                                disabled={educationFields.length === 1}
+                                disabled={educationFields.length === 0}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -542,7 +534,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                                 name={`education.${index}.degree`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Degree</FormLabel>
+                                    <FormLabel>Degree (optional)</FormLabel>
                                     <FormControl>
                                       <Input
                                         placeholder="e.g., B.Sc. in Computer Science"
@@ -558,7 +550,9 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                                 name={`education.${index}.institution`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Institution</FormLabel>
+                                    <FormLabel>
+                                      Institution (optional)
+                                    </FormLabel>
                                     <FormControl>
                                       <Input
                                         placeholder="University name"
@@ -574,7 +568,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                                 name={`education.${index}.year`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Year of graduation</FormLabel>
+                                    <FormLabel>Year (optional)</FormLabel>
                                     <FormControl>
                                       <Input placeholder="2020" {...field} />
                                     </FormControl>
@@ -588,7 +582,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                       </div>
                     )}
 
-                    {/* Step 2: Subjects */}
+                    {/* Step 2: Subjects & Experience */}
                     {currentStep === 2 && (
                       <div className="space-y-6">
                         <div className="space-y-4">
@@ -601,11 +595,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                               variant="outline"
                               size="sm"
                               onClick={() =>
-                                appendSubject({
-                                  name: "",
-                                  rate: 30,
-                                  experience: 0,
-                                })
+                                appendSubject({ id: "", rate: 30 })
                               }
                             >
                               <Plus className="h-4 w-4 mr-2" />
@@ -630,90 +620,86 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
 
                               <FormField
                                 control={control}
-                                name={`subjects.${index}.name`}
+                                name={`subjects.${index}.id`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Subject name</FormLabel>
+                                    <FormLabel>Subject</FormLabel>
                                     <Select
                                       onValueChange={field.onChange}
                                       defaultValue={field.value}
                                     >
                                       <FormControl>
                                         <SelectTrigger>
-                                          <SelectValue placeholder="Select subject" />
+                                          <SelectValue placeholder="Select a subject" />
                                         </SelectTrigger>
                                       </FormControl>
-
                                       <SelectContent>
                                         {categories.map((cat) => (
                                           <SelectItem
                                             key={cat.id}
-                                            value={cat.name}
+                                            value={cat.id}
                                           >
                                             {cat.name}
                                           </SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
-
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
-                              <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                  control={control}
-                                  name={`subjects.${index}.rate`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Rate ($/hr)</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(
-                                              parseFloat(e.target.value) || 0,
-                                            )
-                                          }
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={control}
-                                  // name={`subjects.${index}.experience`}
-                                  name="experience"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Experience (Year)</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          min={1}
-                                          max={100}
-                                          {...field}
-                                          onChange={(e) =>
-                                            field.onChange(
-                                              e.target.valueAsNumber,
-                                            )
-                                          }
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
+
+                              <FormField
+                                control={control}
+                                name={`subjects.${index}.rate`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Rate ($/hr)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) =>
+                                          field.onChange(
+                                            parseFloat(e.target.value),
+                                          )
+                                        }
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             </div>
                           ))}
                         </div>
+
+                        {/* Overall experience */}
+                        <FormField
+                          control={control}
+                          name="experience"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Total years of experience</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.valueAsNumber || 0)
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     )}
 
-                    {/* Step 3: Availability */}
+                    {/* Step 3: Pricing */}
                     {currentStep === 3 && (
                       <div className="space-y-6">
                         <FormField
@@ -733,122 +719,18 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                               </FormControl>
                               <FormDescription>
                                 This will be your default rate. You can set
-                                different rates per subject.
+                                different rates per subject later if needed.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-
-                        <Separator />
-
-                        <div className="space-y-4">
-                          <h3 className="text-lg font-medium">
-                            Weekly Availability
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Set your available time slots for each day.
-                            (Optional for now)
-                          </p>
-                          {[
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                            "Sunday",
-                          ].map((day, index) => (
-                            <div key={day} className="border rounded-lg p-4">
-                              <h4 className="font-medium mb-2">{day}</h4>
-                              {/* Simple placeholder - you can expand this with time slot picker */}
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Clock className="h-4 w-4" />
-                                <span>
-                                  Not set (you can set later in your dashboard)
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     )}
 
                     {/* Step 4: Verification */}
                     {currentStep === 4 && (
                       <div className="space-y-6">
-                        <FormField
-                          control={control}
-                          name="resume"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Upload Resume/CV</FormLabel>
-                              <FormControl>
-                                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                                  <Input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx"
-                                    className="hidden"
-                                    id="resume-upload"
-                                    onChange={(e) =>
-                                      field.onChange(e.target.files?.[0])
-                                    }
-                                  />
-                                  <label
-                                    htmlFor="resume-upload"
-                                    className="cursor-pointer"
-                                  >
-                                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                    <p className="text-sm font-medium">
-                                      Click to upload or drag and drop
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      PDF, DOC up to 10MB
-                                    </p>
-                                  </label>
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={control}
-                          name="idDocument"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Upload ID Document</FormLabel>
-                              <FormControl>
-                                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-muted/50 transition-colors cursor-pointer">
-                                  <Input
-                                    type="file"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    className="hidden"
-                                    id="id-upload"
-                                    onChange={(e) =>
-                                      field.onChange(e.target.files?.[0])
-                                    }
-                                  />
-                                  <label
-                                    htmlFor="id-upload"
-                                    className="cursor-pointer"
-                                  >
-                                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                    <p className="text-sm font-medium">
-                                      Click to upload or drag and drop
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Passport, Driver's License, or ID card
-                                    </p>
-                                  </label>
-                                </div>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
                         <FormField
                           control={control}
                           name="agreeToTerms"
@@ -908,7 +790,7 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
                       </div>
                     )}
 
-                    {/* Form Actions */}
+                    {/* Navigation Buttons */}
                     <div className="flex justify-between pt-4">
                       <Button
                         type="button"
@@ -1026,6 +908,4 @@ const BecomeTutorForm = ({ categories }: { categories: any }) => {
       </div>
     </div>
   );
-};
-
-export default BecomeTutorForm;
+}

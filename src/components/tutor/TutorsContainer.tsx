@@ -20,11 +20,21 @@ const TutorsContainer = () => {
     availability: [],
     languages: [],
   });
-
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("rating");
 
-  // Load all categories once to map names → IDs
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+
+  // Load categories map once
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -40,14 +50,14 @@ const TutorsContainer = () => {
     loadCategories();
   }, []);
 
-  const fetchTutors = async () => {
+  // Fetch tutors with current filters and page
+  const fetchTutors = async (page: number = currentPage) => {
     try {
       setLoading(true);
 
-      // Convert subject names to category IDs
       const categoryIds = filters.subjects
         .map((name) => categoriesMap.get(name))
-        .filter((id) => id !== undefined) as string[];
+        .filter((id): id is string => !!id);
 
       const params: any = {
         search,
@@ -55,15 +65,17 @@ const TutorsContainer = () => {
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
         minRating: filters.minRating,
+        page,
+        limit: 10, // or whatever limit you use
       };
 
-      // Only add categoryIds if we have any
       if (categoryIds.length > 0) {
         params.categoryIds = categoryIds;
       }
 
       const { data } = await tutorService.getTutors(params);
       setTutors(data.tutors);
+      setPagination(data.pagination); // save pagination info
     } catch (err) {
       console.error(err);
     } finally {
@@ -71,12 +83,20 @@ const TutorsContainer = () => {
     }
   };
 
-  // Re‑fetch whenever filters, search, sortBy change AND categories map is ready
+  // Re‑fetch when filters, search, or sort change (reset to page 1)
   useEffect(() => {
     if (categoriesMap.size > 0) {
-      fetchTutors();
+      setCurrentPage(1);
+      fetchTutors(1);
     }
   }, [filters, search, sortBy, categoriesMap]);
+
+  // Manual page change handler
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    setCurrentPage(newPage);
+    fetchTutors(newPage);
+  };
 
   return (
     <TutorsList
@@ -85,6 +105,8 @@ const TutorsContainer = () => {
       onFilterChange={setFilters}
       onSearch={setSearch}
       onSortChange={setSortBy}
+      pagination={pagination}
+      onPageChange={handlePageChange}
     />
   );
 };
