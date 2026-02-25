@@ -22,7 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth";
-import { useAuthStore } from "@/store/auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -51,7 +50,7 @@ import * as z from "zod";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().default(false),
+  rememberMe: z.boolean(), // removed .default(false)
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -78,16 +77,16 @@ const LoginForm = () => {
   const handleCredentialsLogin = async (value: LoginFormValues) => {
     setIsSubmitting(true);
 
-    // Simulate API call
     const toastId = toast.loading("login User");
     try {
+      // will ba called api for login
       const { data, error } = await authClient.signIn.email(value);
-      console.log(data);
+
       if (error) {
         toast.error(error.message, { id: toastId });
         return;
       }
-      useAuthStore.getState().setAuth(data.user, data.token);
+
       toast.success("User Login Successfully ", { id: toastId });
       // router.refresh();
       router.push("/");
@@ -108,7 +107,6 @@ const LoginForm = () => {
       provider: "google",
       callbackURL: window.location.origin,
     });
-    console.log("data is ", data);
   };
 
   const handleForgotPassword = () => {

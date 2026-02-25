@@ -1,9 +1,7 @@
-// lib/get-session.ts
-
+"use server";
 import { authClient } from "./auth";
 
 export const getServerSession = async () => {
-  const session = await authClient.getSession();
-
+  const { data: session } = await authClient.useSession();
   return session;
 };

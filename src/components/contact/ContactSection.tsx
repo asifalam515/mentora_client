@@ -97,7 +97,6 @@ const ContactSection = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Contact form data:", data);
       setIsSubmitted(true);
       form.reset();
     } catch (error) {

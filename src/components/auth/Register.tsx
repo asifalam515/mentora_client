@@ -103,7 +103,7 @@ const RegisterForm = () => {
       console.log("Registration data:", data);
 
       // Redirect based on role
-      if (data.user?.role === Roles.student) {
+      if ((data?.user as any)?.role === Roles.student) {
         router.push("/");
       } else {
         // will redirect to complete become tutor route
@@ -411,7 +411,7 @@ const RegisterForm = () => {
                                 <div
                                   className={`h-full ${strength.color} transition-all duration-500`}
                                   style={{
-                                    width: `${password.length > 0 ? strength.score * 20 : 0}%`,
+                                    width: `${password.length > 0 ? (strength as any).score * 20 : 0}%`,
                                   }}
                                 />
                               </div>

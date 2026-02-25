@@ -4,7 +4,7 @@ import { authClient } from "@/lib/auth";
 
 const BookingsPage = () => {
   const { data, isPending } = authClient.useSession();
-  const customerRole = data?.user?.role;
+  const customerRole = (data?.user as any)?.role;
 
   if (isPending) {
     return <div>Loading...</div>;

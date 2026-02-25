@@ -1,18 +1,19 @@
-import { FieldValues } from "react-hook-form";
+"use server";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
 
-export const loginUser = async (userData: FieldValues) => {
-  try {
-    const res = await fetch(`${process.env.AUTH_URL}/sign-in/email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
-    });
-    const result = await res.json();
-    console.log(result);
-    return result;
-  } catch (error: any) {
-    return Error(error);
+export const setCookies = async (data: any) => {
+  const storeCookie = await cookies();
+  storeCookie.set("token", data.token);
+};
+export const getUserData = async () => {
+  const storeCookie = await cookies();
+  const token = storeCookie.get("token")?.value;
+  let decodedData = null;
+  if (token) {
+    decodedData = await jwtDecode(token);
+    return decodedData;
+  } else {
+    return null;
   }
 };

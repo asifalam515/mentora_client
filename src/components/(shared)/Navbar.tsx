@@ -48,6 +48,7 @@ const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
   const { session, loading } = useAuth();
 
   const userData = session?.user;

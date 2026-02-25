@@ -42,9 +42,7 @@ import { toast } from "sonner";
 // Schema for a new availability slot
 const availabilitySlotSchema = z
   .object({
-    date: z.date({
-      required_error: "Please select a date",
-    }),
+    date: z.date(), // ✅ no options required
     startHour: z.string().min(1, "Start hour required"),
     startMinute: z.string().min(1, "Start minute required"),
     endHour: z.string().min(1, "End hour required"),

@@ -1,8 +1,5 @@
 "use client";
-
-import { authClient } from "@/lib/auth";
 import { createContext, ReactNode, useContext } from "react";
-
 interface AuthContextType {
   session: any; // Replace with your actual session type
   loading: boolean;
@@ -11,10 +8,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, isPending } = authClient.useSession();
-
+  const session = null; // Replace with actual session fetching logic
   return (
-    <AuthContext.Provider value={{ session, loading: isPending }}>
+    <AuthContext.Provider value={{ session, loading: false }}>
       {children}
     </AuthContext.Provider>
   );

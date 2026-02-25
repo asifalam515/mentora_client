@@ -16,7 +16,7 @@ export default function DashboardLayout({ admin, tutor, student }: Props) {
 
   const router = useRouter();
 
-  const role = session?.user?.role;
+  const role = (session?.user as any)?.role;
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/login");

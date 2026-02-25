@@ -37,7 +37,6 @@ export const tutorService = {
 
       if (!res.ok) throw new Error("Failed to fetch tutors");
       const data = await res.json();
-      console.log(data);
       return { data, error: null };
     } catch (error) {
       console.error("Tutor fetch error:", error);
