@@ -15,7 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { authClient } from "@/lib/auth";
 
 interface AvailabilitySlot {
   id: string;
@@ -40,10 +39,6 @@ const AvailableSlotsForBooking = ({
   );
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { data: session, isPending } = authClient.useSession();
-  if (isPending) {
-    return <div>Loading...</div>;
-  }
   const fetchSlots = async () => {
     setLoading(true);
     try {

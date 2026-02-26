@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Roles } from "@/constants/roles";
-import { useAuth } from "@/contexts/auth-context";
 import { authClient } from "@/lib/auth";
 import {
   BarChart3,
@@ -49,17 +48,15 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const { session, loading } = useAuth();
-
-  const userData = session?.user;
-
-  const user: UserData | null = userData
+  const { data: session } = authClient.useSession();
+  console.log(session?.user);
+  const user: UserData | null = session?.user
     ? {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        avatar: userData.image,
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+        role: session.user.role,
+        avatar: session.user.image,
       }
     : null;
 
@@ -110,7 +107,7 @@ const Navbar = () => {
       icon: <Clock className="h-4 w-4" />,
     },
     {
-      href: "/tutor/profile",
+      href: "/profile",
       label: "Profile",
       icon: <User className="h-4 w-4" />,
     },
@@ -123,7 +120,7 @@ const Navbar = () => {
       icon: <BarChart3 className="h-4 w-4" />,
     },
     {
-      href: "/admin/users",
+      href: "/users",
       label: "Users",
       icon: <Users className="h-4 w-4" />,
     },
@@ -133,7 +130,7 @@ const Navbar = () => {
       icon: <BookOpen className="h-4 w-4" />,
     },
     {
-      href: "/admin/categories",
+      href: "/categories",
       label: "Categories",
       icon: <Shield className="h-4 w-4" />,
     },
@@ -160,8 +157,9 @@ const Navbar = () => {
 
   const getProfileRoute = () => {
     if (!user) return "/";
-    if (user.role === Roles.student) return "/dashboard/profile";
-    if (user.role === Roles.tutor) return "/tutor/profile";
+    if (user.role === Roles.student) return "/profile";
+    if (user.role === Roles.tutor) return "/profile";
+    if (user.role === Roles.admin) return "/profile";
     return "/admin";
   };
 
