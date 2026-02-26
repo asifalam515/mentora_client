@@ -71,7 +71,7 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
-    await authClient.signOut();
+    authClient.signOut();
     toast.success("Logged out successfully");
     router.push("/");
   };

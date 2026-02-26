@@ -80,7 +80,7 @@ const LoginForm = () => {
     const toastId = toast.loading("login User");
     try {
       // will ba called api for login
-      const { data, error } = await authClient.signIn.email(value);
+      const { data, error } = authClient.signIn.email(value);
 
       if (error) {
         toast.error(error.message, { id: toastId });
@@ -88,7 +88,7 @@ const LoginForm = () => {
       }
 
       toast.success("User Login Successfully ", { id: toastId });
-      // router.refresh();
+      router.refresh();
       router.push("/");
     } catch (error) {
       toast.error("Something Went Wrong", { id: toastId });
@@ -103,7 +103,7 @@ const LoginForm = () => {
     setIsSubmitting(true);
     setError(null);
     console.log("trying to google login");
-    const data = await authClient.signIn.social({
+    const data = authClient.signIn.social({
       provider: "google",
       callbackURL: window.location.origin,
     });
