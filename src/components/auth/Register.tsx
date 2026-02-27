@@ -24,8 +24,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Roles } from "@/constants/roles";
-import { authClient } from "@/lib/auth";
+import { loginUser, registerUser } from "@/services/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { jwtDecode } from "jwt-decode";
 import {
   ArrowRight,
   BookOpen,
@@ -74,6 +76,7 @@ const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const setUser = useAuthStore((state) => state.setUser);
 
   // Initialize form with react hook form
   const form = useForm<RegisterFormValues>({
@@ -89,33 +92,50 @@ const RegisterForm = () => {
   });
 
   const onSubmit = async (value: RegisterFormValues) => {
+    const toastId = toast.loading("Creating your account...");
     setIsSubmitting(true);
 
-    // Simulate API call
-    const toastId = toast.loading("Creating User");
     try {
-      const { data, error } = await authClient.signUp.email(value);
-      if (error) {
-        toast.error(error.message, { id: toastId });
+      const res = await registerUser(value);
+      if (!res.success) {
+        toast.error(res.message, { id: toastId });
         return;
       }
-      toast.success("User Created Successfully ", { id: toastId });
-      console.log("Registration data:", data);
 
-      // Redirect based on role
-      if ((data?.user as any)?.role === Roles.student) {
-        router.push("/");
-      } else {
-        // will redirect to complete become tutor route
-        router.push("/become-tutor");
+      // ✅ Login automatically after register
+      const loginRes = await loginUser({
+        email: value.email,
+        password: value.password,
+      });
+
+      if (!loginRes?.success) {
+        toast.error(
+          "Account created but login failed. Please login manually.",
+          { id: toastId },
+        );
+        router.push("/login");
+        return;
       }
-    } catch (error) {
-      toast.error("Something Went Wrong", { id: toastId });
+
+      // Update the global auth store so Navbar re-renders instantly
+      const decodedUser = jwtDecode(loginRes.data.token);
+      useAuthStore.getState().setUser(decodedUser);
+      // Redirect only if user is a TUTOR
+      const role = loginRes.data.user.role;
+      console.log(role);
+      if (role === "TUTOR") {
+        router.push("/become-tutor");
+      } else {
+        // STUDENT stays on current page or redirect to homepage
+        router.push("/"); // optional, or remove to stay
+      }
+      toast.success("Account created successfully!", { id: toastId });
+    } catch (error: any) {
+      toast.error(error?.message || "Unexpected error", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   // Password strength checker
   const getPasswordStrength = (password: string) => {
     if (password.length === 0)
@@ -264,7 +284,7 @@ const RegisterForm = () => {
                       I want to join as a
                     </Label>
                     <Tabs
-                      defaultValue="student"
+                      defaultValue="STUDENT"
                       className="w-full"
                       onValueChange={(value) =>
                         form.setValue("role", value as "STUDENT" | "TUTOR")
@@ -290,7 +310,7 @@ const RegisterForm = () => {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="tutor" className="space-y-2 pt-4">
+                      <TabsContent value="TUTOR" className="space-y-2 pt-4">
                         <div className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
                           <p className="text-sm text-muted-foreground">

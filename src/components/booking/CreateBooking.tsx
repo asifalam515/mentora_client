@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { userService } from "@/services/user.service"; // Your server action
 import { format } from "date-fns";
 import { Calendar, Clock, Loader2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -55,7 +54,7 @@ export function CreateBooking({
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const { data, error } = await userService.getSession();
+        // const { data, error } = await userService.getSession();
         if (error || !data?.user) {
           toast.info("Please log in to book a session.", {
             id: "login-required",

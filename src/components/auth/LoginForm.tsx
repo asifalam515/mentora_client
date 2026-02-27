@@ -22,6 +22,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth";
+import { loginUser } from "@/services/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
@@ -63,6 +65,7 @@ const LoginForm = () => {
   const [activeMethod, setActiveMethod] = useState<
     "credentials" | "google" | "github"
   >("credentials");
+  const { setUser } = useAuthStore();
 
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -80,21 +83,20 @@ const LoginForm = () => {
     const toastId = toast.loading("login User");
     try {
       // will ba called api for login
-      const { data, error } = authClient.signIn.email(value);
+      const res = await loginUser(value);
 
-      if (error) {
-        toast.error(error.message, { id: toastId });
-        return;
+      if (res.success) {
+        setUser(res.data.user);
+        toast.success(res.message, { id: toastId });
+        router.push("/");
+        router.refresh();
+      } else {
+        toast.error(res.message, { id: toastId });
       }
-
-      toast.success("User Login Successfully ", { id: toastId });
-      router.refresh();
-      router.push("/");
-    } catch (error) {
-      toast.error("Something Went Wrong", { id: toastId });
-      console.log(error);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      toast.error(error?.message || "An error occurred during login", {
+        id: toastId,
+      });
     }
   };
 

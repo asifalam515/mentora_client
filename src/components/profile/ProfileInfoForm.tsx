@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
-// Schema for student
+// Schema for student and admin
 const studentSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
@@ -36,16 +35,9 @@ const tutorSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
   bio: z.string().min(10, "Bio must be at least 10 characters"),
-  headline: z.string().optional(),
   pricePerHr: z.number().min(5, "Minimum $5").max(500),
   experience: z.number().min(0),
-  // categories handled separately (multi-select)
 });
-
-// Schema for admin (same as student)
-const adminSchema = studentSchema;
-
-type ProfileFormValues = z.infer<typeof tutorSchema>; // union would be complex; we'll use any
 
 interface ProfileInfoFormProps {
   profile: StudentProfile | TutorProfile | AdminProfile;
@@ -59,16 +51,14 @@ export default function ProfileInfoForm({
   const isTutor = profile.role === "TUTOR";
   const isAdmin = profile.role === "ADMIN";
 
-  // Build default values based on role
+  // Default values for form
   const defaultValues = isTutor
     ? {
-        name: (profile as TutorProfile).name,
-        email: (profile as TutorProfile).email,
+        name: profile.name,
+        email: profile.email,
         bio: (profile as TutorProfile).bio,
-        headline: (profile as TutorProfile).headline || "",
         pricePerHr: (profile as TutorProfile).pricePerHr,
         experience: (profile as TutorProfile).experience,
-        // categories handled separately
       }
     : {
         name: profile.name,
@@ -80,15 +70,17 @@ export default function ProfileInfoForm({
     defaultValues,
   });
 
+  // Categories state for tutors
   const [categoryIds, setCategoryIds] = useState<string[]>(
-    isTutor ? (profile as TutorProfile).categories.map((c) => c.id) : [],
+    isTutor
+      ? ((profile as TutorProfile)?.categories ?? []).map((c) => c.id)
+      : [],
   );
-
   const [allCategories, setAllCategories] = useState<
     { id: string; name: string }[]
   >([]);
 
-  // Load categories for tutor
+  // Fetch all categories if tutor
   useEffect(() => {
     if (isTutor) {
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/categories`)
@@ -116,6 +108,7 @@ export default function ProfileInfoForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Name */}
             <FormField
               control={form.control}
               name="name"
@@ -130,6 +123,7 @@ export default function ProfileInfoForm({
               )}
             />
 
+            {/* Email */}
             <FormField
               control={form.control}
               name="email"
@@ -140,34 +134,18 @@ export default function ProfileInfoForm({
                     <Input type="email" {...field} disabled={isAdmin} />
                   </FormControl>
                   {isAdmin && (
-                    <FormDescription>
+                    <p className="text-sm text-muted-foreground">
                       Admins cannot change email
-                    </FormDescription>
+                    </p>
                   )}
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Tutor-only fields */}
             {isTutor && (
               <>
-                <FormField
-                  control={form.control}
-                  name="headline"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Headline</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Experienced Math Tutor"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="bio"
@@ -224,7 +202,7 @@ export default function ProfileInfoForm({
                   />
                 </div>
 
-                {/* Categories (multi-select) */}
+                {/* Categories multi-select */}
                 <FormItem>
                   <FormLabel>Subjects</FormLabel>
                   <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">

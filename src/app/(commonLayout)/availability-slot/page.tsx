@@ -1,13 +1,13 @@
 "use client";
 import AvailabilityManager from "@/components/tutor/AvailabilityManager";
-import { authClient } from "@/lib/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 
 const AvailabilitySlot = () => {
-  const { data: session, isPending } = authClient.useSession();
-  if (isPending) {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) {
     return <div>Loading...</div>;
   }
-  const userId = session?.user.id as string;
+  const userId = user?.id as string;
 
   return (
     <div>

@@ -22,12 +22,15 @@ export async function updateProfile(data: any) {
   return res.json();
 }
 
-export async function updateAvailability(slots: any[]) {
-  const res = await fetch(`${API_BASE}/profile/availability`, {
+export async function updateAvailability(
+  slotId: string,
+  data: { startTime: string; endTime: string },
+) {
+  const res = await fetch(`${API_BASE}/profile/${slotId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ slots }),
+    body: JSON.stringify({ startTime: data.startTime, endTime: data.endTime }),
   });
   if (!res.ok) {
     const error = await res.json();

@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { authClient } from "@/lib/auth";
+import { createTutorProfile } from "@/services/tutorProfile";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Award,
@@ -122,8 +123,7 @@ interface BecomeTutorFormProps {
 }
 
 export default function BecomeTutorForm({ categories }: BecomeTutorFormProps) {
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const user = useAuthStore((state) => state.user);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -249,20 +249,13 @@ export default function BecomeTutorForm({ categories }: BecomeTutorFormProps) {
         agreeToBackground: values.agreeToBackground,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Submission failed");
+      try {
+        const data = createTutorProfile(payload);
+        if (!data) {
+          console.log("error occured");
+        }
+      } catch (error) {
+        console.log(error);
       }
 
       toast.success(

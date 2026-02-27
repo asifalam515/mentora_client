@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Roles } from "@/constants/roles";
-import { authClient } from "@/lib/auth";
+import { UserLogOut } from "@/services/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import {
   BarChart3,
   BookOpen,
@@ -47,20 +46,10 @@ const Navbar = () => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const { data: session } = authClient.useSession();
-  console.log(session?.user);
-  const user: UserData | null = session?.user
-    ? {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        role: session.user.role,
-        avatar: session.user.image,
-      }
-    : null;
+  const { user, setUser } = useAuthStore();
 
-  // Scroll blur effect
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
@@ -68,9 +57,12 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
-    authClient.signOut();
+    UserLogOut();
+    setLoading(true);
     toast.success("Logged out successfully");
+    setUser(null);
     router.push("/");
+    router.refresh();
   };
 
   const publicNavItems = [

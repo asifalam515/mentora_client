@@ -3,42 +3,40 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getProfile } from "@/lib/api/profile";
-import { authClient } from "@/lib/auth";
-import type {
-  AdminProfile,
-  StudentProfile,
-  TutorProfile,
-} from "@/types/profile";
+import { useAuthStore } from "@/store/useAuthStore.ts";
+import type { TutorProfile } from "@/types/profile";
 import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import ManageAvailability from "./ManageAvailability";
 import ProfileInfoForm from "./ProfileInfoForm";
 
 export default function ProfilePage() {
-  const { data: session } = authClient.useSession();
-  const [profile, setProfile] = useState<
-    StudentProfile | TutorProfile | AdminProfile | null
-  >(null);
+  const storeUser = useAuthStore((state) => state.user);
+  const [profile, setProfile] = useState<typeof storeUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!storeUser) {
+      setError("User not logged in");
+      setLoading(false);
+      return;
+    }
 
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const data = await getProfile();
-        setProfile(data);
+        // If you want, you can fetch more detailed profile info from the backend here
+        setProfile(storeUser);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || "Failed to load profile");
       } finally {
         setLoading(false);
       }
     };
+
     loadProfile();
-  }, [session]);
+  }, [storeUser]);
 
   if (loading) {
     return (
@@ -82,7 +80,7 @@ export default function ProfilePage() {
           <TabsContent value="availability">
             <ManageAvailability
               tutorId={profile.id}
-              initialSlots={(profile as TutorProfile).availability}
+              initialSlots={(profile as TutorProfile)?.availability || []}
             />
           </TabsContent>
         )}

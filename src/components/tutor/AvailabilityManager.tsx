@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createSlot, deleteSlot, getSlot } from "@/services/slot/slot";
 import { toast } from "sonner";
 
 // Schema for a new availability slot
@@ -109,19 +110,14 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
 
   const fetchSlots = async () => {
     setIsLoading(true);
+
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        },
-      );
-      if (!response.ok) throw new Error("Failed to fetch slots");
-      const data = await response.json();
+      const data = await getSlot();
+
+      if (!data) {
+        throw new Error("Failed to fetch slots");
+      }
+
       setSlots(data);
     } catch (error) {
       toast.error("An Error Occurred", {
@@ -158,19 +154,13 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
         isBooked: false,
       };
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to create slot");
-
-      toast.success("Slot has been created");
+      try {
+        const newSlot = await createSlot(payload);
+        toast.success("Slot has been created");
+        fetchSlots();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to create slot");
+      }
 
       // Reset form to next hour (optional)
       form.reset({
@@ -194,17 +184,8 @@ const AvailabilityManager = ({ tutorId }: AvailabilityManagerProps) => {
 
   const handleDelete = async (slotId: string) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/{slotId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-      if (!response.ok) throw new Error("Failed to delete slot");
-
-      toast("Deleted");
-
+      await deleteSlot(slotId);
+      toast.success("Slot deleted successfully");
       fetchSlots();
     } catch (error) {
       toast.error(`Error Happen ${error}`, {

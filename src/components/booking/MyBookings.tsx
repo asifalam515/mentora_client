@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Roles } from "@/constants/roles";
+import { getBookings } from "@/services/booking";
 import { Booking, UserRole } from "@/types/booking/types";
 import { ReviewModal } from "./ReviewModal";
 
@@ -89,14 +90,9 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings?role=${userRole}&userId=${userId}`,
-        { credentials: "include" },
-      );
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      setBookings(data);
-    } catch {
+      const data = getBookings(userRole, userId);
+      if (data) setBookings(await data);
+    } catch (error) {
       toast.error("Failed to load bookings");
     } finally {
       setLoading(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { authClient } from "@/lib/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -12,18 +12,18 @@ interface Props {
 }
 
 export default function DashboardLayout({ admin, tutor, student }: Props) {
-  const { data: session, isPending } = authClient.useSession();
-
+  // const { data: session, isPending } = authClient.useSession();
+  const { user, isLoading } = useAuthStore();
   const router = useRouter();
 
-  const role = (session?.user as any)?.role;
+  const role = user?.role;
 
   useEffect(() => {
-    if (!isPending && !session) router.replace("/login");
-  }, [isPending, session]);
+    if (!isLoading && !user) router.replace("/login");
+  }, [isLoading, user]);
 
-  if (isPending) return <p className="p-6">Loading...</p>;
-  if (!session) return null;
+  if (isLoading) return <p className="p-6">Loading...</p>;
+  if (!user) return null;
 
   if (role === "ADMIN") return <>{admin}</>;
   if (role === "TUTOR") return <>{tutor}</>;
