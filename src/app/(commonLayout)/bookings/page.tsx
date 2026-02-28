@@ -1,12 +1,13 @@
 "use client";
 import { MyBookings } from "@/components/booking/MyBookings";
-import { authClient } from "@/lib/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 
 const BookingsPage = () => {
-  const { data, isPending } = authClient.useSession();
-  const customerRole = (data?.user as any)?.role;
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const customerRole = user?.role;
 
-  if (isPending) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -14,7 +15,7 @@ const BookingsPage = () => {
     <div>
       <MyBookings
         userRole={customerRole || "STUDENT"}
-        userId={data?.user.id || ""}
+        userId={user?.id || ""}
       />
     </div>
   );

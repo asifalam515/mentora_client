@@ -36,7 +36,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Roles } from "@/constants/roles";
-import { getBookings } from "@/services/booking";
+import {
+  deleteBookingService,
+  getBookings,
+  patchBookingStatus,
+} from "@/services/booking";
 import { Booking, UserRole } from "@/types/booking/types";
 import { ReviewModal } from "./ReviewModal";
 
@@ -86,12 +90,14 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     "ALL",
   );
   const router = useRouter();
-
   const fetchBookings = async () => {
+    if (!userId) return;
+
     setLoading(true);
     try {
-      const data = getBookings(userRole, userId);
-      if (data) setBookings(await data);
+      const data = await getBookings(userRole, userId);
+
+      setBookings(data || []);
     } catch (error) {
       toast.error("Failed to load bookings");
     } finally {
@@ -108,16 +114,9 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     newStatus: Booking["status"],
   ) => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/status/${bookingId}`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        },
-      );
-      if (!res.ok) throw new Error();
+      const response = await patchBookingStatus(bookingId, newStatus);
+
+      toast.success("Booking status updated successfully!");
 
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b)),
@@ -174,12 +173,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
   const deleteBooking = async (bookingId: string) => {
     if (!confirm("Delete this booking?")) return;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings/${bookingId}`,
-        { method: "DELETE", credentials: "include" },
-      );
-      if (!res.ok) throw new Error();
-
+      const response = await deleteBookingService(bookingId);
       setBookings((prev) => prev.filter((b) => b.id !== bookingId));
       toast.success("Deleted");
     } catch {

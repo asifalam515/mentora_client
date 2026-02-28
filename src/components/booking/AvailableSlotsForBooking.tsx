@@ -15,6 +15,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getTutorAvailability } from "@/lib/booking";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 
 interface AvailabilitySlot {
   id: string;
@@ -38,28 +40,16 @@ const AvailableSlotsForBooking = ({
     null,
   );
   const abortControllerRef = useRef<AbortController | null>(null);
+  const user = useAuthStore((state) => state.user);
 
   const fetchSlots = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/tutor/${tutorId}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch slots");
-      }
-
-      const data = await response.json();
+      const data = await getTutorAvailability(tutorId);
 
       // Filter out past slots (end time already passed)
       const now = new Date();
-      const futureSlots = data.filter(
+      const futureSlots = data?.filter(
         (slot: AvailabilitySlot) => new Date(slot.endTime) > now,
       );
 
@@ -79,7 +69,7 @@ const AvailableSlotsForBooking = ({
   }, [tutorId]);
 
   const handleBookSlot = async (slotId: string) => {
-    if (!session?.user) {
+    if (!user) {
       toast.error("Please log in to book a session");
       return;
     }
@@ -109,7 +99,7 @@ const AvailableSlotsForBooking = ({
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            studentId: session.user.id,
+            studentId: user.id,
             slotId,
           }),
           signal,

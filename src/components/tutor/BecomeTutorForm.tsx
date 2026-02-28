@@ -220,9 +220,6 @@ export default function BecomeTutorForm({ categories }: BecomeTutorFormProps) {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  // --------------------------------------------------------------------
-  // Submission (JSON only)
-  // --------------------------------------------------------------------
   const onSubmit = async (values: CompleteFormValues) => {
     const toastId = toast.loading("Submitting your application...");
     setIsSubmitting(true);

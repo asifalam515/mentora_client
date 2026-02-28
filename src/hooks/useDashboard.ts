@@ -1,22 +1,30 @@
 "use client";
 
 import { getDashboardStats } from "@/lib/api";
-import { authClient } from "@/lib/auth";
+import { useAuthStore } from "@/store/useAuthStore.ts";
+
 import { useEffect, useState } from "react";
 
 export function useDashboard() {
-  const { data: session, isPending } = authClient.useSession();
+  const user = useAuthStore((state) => state.user);
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!session) return;
+    if (!user) return;
 
-    getDashboardStats(session.token)
-      .then(setData)
-      .finally(() => setLoading(false));
-  }, [session]);
+    const fetchData = async () => {
+      try {
+        const res = await getDashboardStats();
+        setData(res);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   return { data, loading };
 }
