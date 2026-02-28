@@ -116,7 +116,6 @@ const RegisterForm = () => {
         return;
       }
 
-      // Update the global auth store so Navbar re-renders instantly
       const decodedUser = jwtDecode(loginRes.data.token);
       useAuthStore.getState().setUser(decodedUser);
       // Redirect only if user is a TUTOR
@@ -125,8 +124,7 @@ const RegisterForm = () => {
       if (role === "TUTOR") {
         router.push("/become-tutor");
       } else {
-        // STUDENT stays on current page or redirect to homepage
-        router.push("/"); // optional, or remove to stay
+        router.push("/");
       }
       toast.success("Account created successfully!", { id: toastId });
     } catch (error: any) {
