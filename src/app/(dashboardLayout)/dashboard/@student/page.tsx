@@ -2,7 +2,9 @@
 
 import Profile from "@/app/(commonLayout)/profile/page";
 import { MyBookings } from "@/components/booking/MyBookings";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore.ts";
+import Link from "next/link";
 
 export default function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -12,6 +14,10 @@ export default function StudentDashboard() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Student Dashboard</h1>
+      <Button variant="destructive">
+        {" "}
+        <Link href="/">Navigate Home</Link>{" "}
+      </Button>
 
       <div className="grid grid-cols-2">
         <MyBookings userRole="STUDENT" userId={user?.id as string} />

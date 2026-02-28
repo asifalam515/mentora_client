@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { updateUserStatus } from "@/services/admin";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -75,17 +76,8 @@ export function UserManagementByAdmin() {
   ) => {
     setUpdatingId(userId);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/admin/users/${userId}/status`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status: newStatus }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Update failed");
+      const res = await updateUserStatus(userId, newStatus);
+      toast.success("User Status Updated");
 
       // Optimistically update the user in state
       setUsers((prev) =>

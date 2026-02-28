@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { postReview } from "@/services/review";
 
 interface ReviewModalProps {
   open: boolean;
@@ -39,21 +40,8 @@ export const ReviewModal = ({
     if (!bookingId || !tutorId) return;
     setSubmitting(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/reviews`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            bookingId,
-            tutorId,
-            rating,
-            comment,
-          }),
-        },
-      );
-      if (!response.ok) throw new Error("Failed to submit review");
+      const response = postReview({ bookingId, tutorId, rating, comment });
+      if (!response) throw new Error("Failed to submit review");
       toast.success("Review submitted! Thank you.");
       onSuccess();
       onOpenChange(false);
