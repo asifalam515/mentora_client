@@ -15,9 +15,17 @@ export const registerUser = async (userData: FieldValues) => {
     });
 
     const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.message || "Invalid email or password");
+      return {
+        success: false,
+        message: result?.message || "Registration failed",
+        data: null,
+      };
+    }
 
     // Save token in cookie if exists
-    if (result.success && result.data?.token) {
+    if (result.data?.token) {
       const storeCookie = cookies();
 
       storeCookie.set("token", result.data.token, {

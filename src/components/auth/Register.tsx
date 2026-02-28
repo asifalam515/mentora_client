@@ -92,13 +92,12 @@ const RegisterForm = () => {
   });
 
   const onSubmit = async (value: RegisterFormValues) => {
-    const toastId = toast.loading("Creating your account...");
     setIsSubmitting(true);
-
+    const toastId = toast.loading("Creating your account...");
     try {
       const res = await registerUser(value);
-      if (!res.success) {
-        toast.error(res.message, { id: toastId });
+      if (!res.success || res.success === false) {
+        toast.error(res?.message || "Invalid credentials", { id: toastId });
         return;
       }
 
@@ -108,7 +107,7 @@ const RegisterForm = () => {
         password: value.password,
       });
 
-      if (!loginRes?.success) {
+      if (!loginRes || !loginRes.success) {
         toast.error(
           "Account created but login failed. Please login manually.",
           { id: toastId },
@@ -121,7 +120,7 @@ const RegisterForm = () => {
       const decodedUser = jwtDecode(loginRes.data.token);
       useAuthStore.getState().setUser(decodedUser);
       // Redirect only if user is a TUTOR
-      const role = loginRes.data.user.role;
+      const role = loginRes.data?.user?.role;
       console.log(role);
       if (role === "TUTOR") {
         router.push("/become-tutor");
