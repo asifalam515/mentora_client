@@ -45,17 +45,35 @@ export const loginUser = async (userData: FieldValues) => {
       },
       body: JSON.stringify(userData),
     });
+
     const result = await res.json();
-    const storeCookie = await cookies();
-    if (result.success) {
-      storeCookie.set("token", result?.data?.token);
+
+    // 1. Check for failure immediately
+    if (!res.ok || !result.success) {
+      // This message comes from your backend or a fallback string
+      throw new Error(result.message || "Invalid email or password");
     }
+
+    // 2. If we reach here, it means success.
+    // Handle Cookies
+    const storeCookie = await cookies();
+    storeCookie.set("token", result.data.token);
+
+    // 3. Handle Store & Decoding
     const userStore = useAuthStore.getState();
     const user = jwtDecode(result.data.token);
     userStore.setUser(user as any);
+
     return result;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+    // 4. Log the error and return a structured response or re-throw
+    console.error("Login Error:", error.message);
+
+    // You can return a custom object so your UI can display the message
+    return {
+      success: false,
+      message: error.message || "Something went wrong",
+    };
   }
 };
 

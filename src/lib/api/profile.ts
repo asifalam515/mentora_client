@@ -62,19 +62,29 @@ export async function updateProfile(data: any) {
   }
 }
 
-export async function updateAvailability(
-  slotId: string,
-  data: { startTime: string; endTime: string },
-) {
-  const res = await fetch(`${API_BASE}/profile/${slotId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ startTime: data.startTime, endTime: data.endTime }),
-  });
+export async function updateAvailability(slots: any[]) {
+  const store = await cookies();
+  const token = store.get("token")?.value;
+
+  if (!token) throw new Error("Authentication required");
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/profile/availability`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ slots }),
+    },
+  );
+
+  const result = await res.json();
+
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.error || "Failed to update availability");
+    throw new Error(result?.error || "Failed to update availability");
   }
-  return res.json();
+
+  return result;
 }

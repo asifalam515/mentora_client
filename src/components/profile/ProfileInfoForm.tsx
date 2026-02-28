@@ -1,7 +1,21 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,25 +32,15 @@ import type {
   StudentProfile,
   TutorProfile,
 } from "@/types/profile";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import * as z from "zod";
 
-// Schema for student and admin
-const studentSchema = z.object({
+// Combined Schema to handle all roles dynamically
+const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
-});
-
-// Schema for tutor
-const tutorSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  bio: z.string().min(10, "Bio must be at least 10 characters"),
-  pricePerHr: z.number().min(5, "Minimum $5").max(500),
-  experience: z.number().min(0),
+  // Tutor specific fields (optional in schema, but validated if present)
+  bio: z.string().min(10, "Bio must be at least 10 characters").optional(),
+  pricePerHr: z.number().min(5, "Minimum $5").max(500).optional(),
+  experience: z.number().min(0, "Cannot be negative").optional(),
 });
 
 interface ProfileInfoFormProps {
@@ -51,101 +55,103 @@ export default function ProfileInfoForm({
   const isTutor = profile.role === "TUTOR";
   const isAdmin = profile.role === "ADMIN";
 
-  // Default values for form
-  const defaultValues = isTutor
-    ? {
-        name: profile.name,
-        email: profile.email,
-        bio: (profile as TutorProfile).bio,
-        pricePerHr: (profile as TutorProfile).pricePerHr,
-        experience: (profile as TutorProfile).experience,
-      }
-    : {
-        name: profile.name,
-        email: profile.email,
-      };
-
-  const form = useForm({
-    resolver: zodResolver(isTutor ? tutorSchema : studentSchema),
-    defaultValues,
-  });
-
-  // Categories state for tutors
-  const [categoryIds, setCategoryIds] = useState<string[]>(
-    isTutor
-      ? ((profile as TutorProfile)?.categories ?? []).map((c) => c.id)
-      : [],
-  );
   const [allCategories, setAllCategories] = useState<
     { id: string; name: string }[]
   >([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    isTutor ? (profile as TutorProfile).categories?.map((c) => c.id) || [] : [],
+  );
+  console.log(profile);
+  const form = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: profile.name || "",
+      email: profile.email || "",
+      bio: isTutor ? (profile as TutorProfile).bio || "" : "",
+      pricePerHr: isTutor ? (profile as TutorProfile).pricePerHr || 0 : 0,
+      experience: isTutor ? (profile as TutorProfile).experience || 0 : 0,
+    },
+  });
 
-  // Fetch all categories if tutor
   useEffect(() => {
     if (isTutor) {
       fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/categories`)
         .then((res) => res.json())
-        .then((data) => setAllCategories(data.data || []));
+        .then((data) => setAllCategories(data.data || []))
+        .catch(() => toast.error("Failed to load categories"));
     }
   }, [isTutor]);
 
   const onSubmit = async (values: any) => {
     try {
-      const payload = isTutor ? { ...values, categoryIds } : values;
+      // Prepare payload: only include tutor fields if role is TUTOR
+      const payload = isTutor
+        ? { ...values, categoryIds: selectedCategoryIds }
+        : { name: values.name, email: values.email };
+
       const updated = await updateProfile(payload);
       toast.success("Profile updated successfully");
       onUpdate(updated);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Update failed");
     }
   };
 
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
   return (
-    <Card>
+    <Card className="shadow-sm">
       <CardHeader>
         <CardTitle>Profile Information</CardTitle>
+        <CardDescription>
+          Update your personal details and public profile.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Name */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Email */}
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} disabled={isAdmin} />
-                  </FormControl>
-                  {isAdmin && (
-                    <p className="text-sm text-muted-foreground">
-                      Admins cannot change email
-                    </p>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} disabled={isAdmin} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            {/* Tutor-only fields */}
             {isTutor && (
-              <>
+              <div className="space-y-6 border-t pt-6">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Tutor Professional Details
+                </h3>
+
                 <FormField
                   control={form.control}
                   name="bio"
@@ -153,7 +159,11 @@ export default function ProfileInfoForm({
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl>
-                        <Textarea rows={4} {...field} />
+                        <Textarea
+                          rows={4}
+                          placeholder="Tell students about your teaching style..."
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -202,39 +212,61 @@ export default function ProfileInfoForm({
                   />
                 </div>
 
-                {/* Categories multi-select */}
-                <FormItem>
-                  <FormLabel>Subjects</FormLabel>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                    {allCategories.map((cat) => (
-                      <div key={cat.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={cat.id}
-                          checked={categoryIds.includes(cat.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setCategoryIds([...categoryIds, cat.id]);
-                            } else {
-                              setCategoryIds(
-                                categoryIds.filter((id) => id !== cat.id),
-                              );
-                            }
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <label htmlFor={cat.id} className="text-sm">
+                {/* Subjects Multi-select UI */}
+                <div className="space-y-3">
+                  <FormLabel>Subjects / Categories</FormLabel>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedCategoryIds.map((id) => {
+                      const cat = allCategories.find((c) => c.id === id);
+                      return cat ? (
+                        <Badge key={id} variant="secondary" className="pl-2">
                           {cat.name}
-                        </label>
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(id)}
+                            className="ml-2 hover:text-destructive"
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-3 border rounded-md bg-muted/20">
+                    {allCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleCategory(cat.id)}
+                        className={`flex items-center justify-between px-3 py-2 text-xs rounded-md border transition-colors ${
+                          selectedCategoryIds.includes(cat.id)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {cat.name}
+                        {selectedCategoryIds.includes(cat.id) && (
+                          <Check className="h-3 w-3" />
+                        )}
+                      </button>
                     ))}
                   </div>
-                </FormItem>
-              </>
+                </div>
+              </div>
             )}
 
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            <Button
+              type="submit"
+              disabled={form.formState.isSubmitting}
+              className="w-full md:w-auto"
+            >
+              {form.formState.isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </form>
         </Form>

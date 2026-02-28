@@ -4,10 +4,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuthStore } from "@/store/useAuthStore.ts";
-import type { TutorProfile } from "@/types/profile";
 import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import ManageAvailability from "./ManageAvailability";
+import AvailabilityManager from "../tutor/AvailabilityManager";
 import ProfileInfoForm from "./ProfileInfoForm";
 
 export default function ProfilePage() {
@@ -26,7 +25,7 @@ export default function ProfilePage() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        // If you want, you can fetch more detailed profile info from the backend here
+
         setProfile(storeUser);
       } catch (err: any) {
         setError(err.message || "Failed to load profile");
@@ -78,10 +77,7 @@ export default function ProfilePage() {
 
         {isTutor && (
           <TabsContent value="availability">
-            <ManageAvailability
-              tutorId={profile.id}
-              initialSlots={(profile as TutorProfile)?.availability || []}
-            />
+            <AvailabilityManager tutorId={profile.id}></AvailabilityManager>
           </TabsContent>
         )}
       </Tabs>

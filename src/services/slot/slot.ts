@@ -77,3 +77,37 @@ export const deleteSlot = async (slotId: string) => {
     throw error; // let the component handle toast/error UI
   }
 };
+export const updateSlot = async (
+  slotId: string,
+  updatedData: Partial<FieldValues>,
+) => {
+  try {
+    const store = await cookies();
+    const token = store.get("token")?.value;
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/${slotId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Throw the backend error message or a fallback
+      throw new Error(data?.message || "Failed to update slot");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Update slot error:", error);
+    // Throwing the error allows your UI component's catch block to show the toast
+    throw error;
+  }
+};
