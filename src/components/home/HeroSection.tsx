@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Award,
   BookOpen,
@@ -18,7 +17,6 @@ import {
   GraduationCap,
   Music,
   Play,
-  Search,
   Shield,
   Star,
   Target,
@@ -176,20 +174,8 @@ const HeroSection = () => {
               <CardContent className="p-6">
                 <form onSubmit={handleSearch} className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="What do you want to learn today?"
-                        className="pl-10 h-12"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    <Button type="submit" size="lg" className="h-12 px-8">
-                      Find Tutors
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    Find Tutors
+                    <ChevronRight className="ml-2 h-4 w-4" />
                   </div>
 
                   {/* Popular Subjects */}
