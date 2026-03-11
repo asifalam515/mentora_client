@@ -170,7 +170,7 @@ const Navbar = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
               <BookOpen className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold">SkillBridge</span>
+            <span className="text-xl font-bold"> Mentora</span>
           </Link>
 
           {/* Desktop */}

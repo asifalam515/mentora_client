@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Skill Bridge ",
-  description: "learn Teach and Grow From SkillBridge",
+  title: "Mentora ",
+  description: "A place where mentors guide learners",
 };
 
 export default async function RootLayout({
