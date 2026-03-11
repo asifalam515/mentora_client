@@ -173,7 +173,6 @@ const Navbar = () => {
             <span className="text-xl font-bold"> Mentora</span>
           </Link>
 
-          {/* Desktop */}
           <div className="hidden md:flex items-center space-x-1">
             {publicNavItems.map((item) => (
               <Link key={item.href} href={item.href}>

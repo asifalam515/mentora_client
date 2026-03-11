@@ -12,7 +12,7 @@ const testimonials = [
     role: "Postdoctoral Researcher",
     org: "Stanford University",
     content:
-      "The caliber of mentors on SkillBridge is unparalleled. I was able to find a specialist in Neural Networks who helped me bypass months of trial and error in my research.",
+      "The caliber of mentors on Menotra is unparalleled. I was able to find a specialist in Neural Networks who helped me bypass months of trial and error in my research.",
     avatar: "https://i.pravatar.cc/150?u=aris",
   },
   {
@@ -21,7 +21,7 @@ const testimonials = [
     role: "Senior VP of Engineering",
     org: "TechFlow Systems",
     content:
-      "We use SkillBridge for our executive upskilling. The platform's ability to vet for both technical depth and pedagogical skill is what sets it apart from competitors.",
+      "We use Menotra for our executive upskilling. The platform's ability to vet for both technical depth and pedagogical skill is what sets it apart from competitors.",
     avatar: "https://i.pravatar.cc/150?u=marcus",
   },
   {
