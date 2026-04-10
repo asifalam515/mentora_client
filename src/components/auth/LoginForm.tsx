@@ -41,7 +41,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +98,15 @@ const LoginForm = () => {
         setUser(res.data.user);
       }
 
-      router.push("/");
+      const redirectPath = searchParams.get("redirect");
+      const safeRedirectPath =
+        redirectPath &&
+        redirectPath.startsWith("/") &&
+        !redirectPath.startsWith("//")
+          ? redirectPath
+          : "/";
+
+      router.push(safeRedirectPath);
       router.refresh();
     } catch (error: any) {
       // This catches unexpected system/network crashes
