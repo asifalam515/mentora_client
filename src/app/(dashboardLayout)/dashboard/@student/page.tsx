@@ -2,6 +2,7 @@
 
 import Profile from "@/app/(commonLayout)/profile/page";
 import { MyBookings } from "@/components/booking/MyBookings";
+import StudentInvoicesList from "@/components/invoice/StudentInvoicesList";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore.ts";
 import Link from "next/link";
@@ -23,6 +24,17 @@ export default function StudentDashboard() {
         <MyBookings userRole="STUDENT" userId={user?.id as string} />
         <Profile></Profile>
       </div>
+
+      <div className="flex flex-wrap gap-3">
+        <Button asChild variant="outline">
+          <Link href="/chats">Open Chats</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/invoices">View Invoices</Link>
+        </Button>
+      </div>
+
+      <StudentInvoicesList />
     </div>
   );
 }

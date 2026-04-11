@@ -104,6 +104,7 @@ function CheckoutForm({
   const [finalizing, setFinalizing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
+  const [needsFinalizeRetry, setNeedsFinalizeRetry] = useState(false);
 
   const verifyBookingRecovery = async (paymentIntentId: string) => {
     try {
@@ -132,6 +133,7 @@ function CheckoutForm({
 
   const finalizeBooking = async () => {
     setFinalizing(true);
+    setPaymentError(null);
 
     try {
       const response = await fetch(
@@ -158,32 +160,37 @@ function CheckoutForm({
 
         if (recovered) {
           toast.success("Payment confirmed and booking found after refresh.");
+          setNeedsFinalizeRetry(false);
           onSuccess?.();
           window.dispatchEvent(new CustomEvent("booking:updated"));
           onFinalized();
           return;
         }
 
-        throw new Error(
-          result?.message ||
-            "Payment succeeded but booking confirmation did not finish. Please check your bookings and contact support if needed.",
-        );
+        throw new Error(result?.message || "BOOKING_FINALIZE_RETRY");
       }
 
       toast.success("Payment successful and booking confirmed.");
+      setNeedsFinalizeRetry(false);
       onSuccess?.();
       window.dispatchEvent(new CustomEvent("booking:updated"));
       onFinalized();
     } catch (error: unknown) {
       const message = getErrorMessage(
         error,
-        "Booking finalization failed after payment.",
+        "Payment succeeded but booking not finalized. Please retry finalize booking.",
       );
-      toast.error(message);
-      setPaymentError(
-        message ||
-          "Payment was successful, but booking creation failed. Please refresh your bookings and contact support if this persists.",
-      );
+
+      if (message === "BOOKING_FINALIZE_RETRY") {
+        const recoveryMessage =
+          "Payment succeeded but booking not finalized. Please retry finalize booking.";
+        toast.error(recoveryMessage);
+        setPaymentError(recoveryMessage);
+        setNeedsFinalizeRetry(true);
+      } else {
+        toast.error(message);
+        setPaymentError(message);
+      }
     } finally {
       setFinalizing(false);
     }
@@ -196,6 +203,7 @@ function CheckoutForm({
     }
 
     setPaymentError(null);
+    setNeedsFinalizeRetry(false);
     setConfirming(true);
 
     try {
@@ -210,7 +218,33 @@ function CheckoutForm({
         return;
       }
 
-      if (result.paymentIntent?.status !== "succeeded") {
+      const paymentStatus = result.paymentIntent?.status;
+
+      if (paymentStatus === "processing") {
+        const processingMessage =
+          "Payment is processing. Booking will be created after successful confirmation.";
+        setPaymentError(processingMessage);
+        toast.info(processingMessage);
+        return;
+      }
+
+      if (paymentStatus === "requires_payment_method") {
+        const failedMessage =
+          "Payment failed. Please try another payment method.";
+        setPaymentError(failedMessage);
+        toast.error(failedMessage);
+        return;
+      }
+
+      if (paymentStatus === "canceled") {
+        const cancelledMessage =
+          "Payment was canceled. Booking was not created.";
+        setPaymentError(cancelledMessage);
+        toast.error(cancelledMessage);
+        return;
+      }
+
+      if (paymentStatus !== "succeeded") {
         setPaymentError("Payment was not completed. Booking was not created.");
         toast.error("Payment not completed. Booking was not created.");
         return;
@@ -260,7 +294,9 @@ function CheckoutForm({
 
       <Button
         onClick={handlePayAndBook}
-        disabled={confirming || finalizing || !stripe || !elements}
+        disabled={
+          confirming || finalizing || needsFinalizeRetry || !stripe || !elements
+        }
         className="w-full gap-2"
       >
         {confirming || finalizing ? (
@@ -274,6 +310,17 @@ function CheckoutForm({
             ? "Finalizing booking..."
             : "Pay and Book"}
       </Button>
+
+      {needsFinalizeRetry && (
+        <Button
+          variant="outline"
+          onClick={finalizeBooking}
+          disabled={finalizing}
+          className="w-full"
+        >
+          {finalizing ? "Retrying finalization..." : "Retry finalize booking"}
+        </Button>
+      )}
     </div>
   );
 }
@@ -289,6 +336,7 @@ export default function PaymentFirstBookingDialog({
   const [paymentIntent, setPaymentIntent] =
     useState<PaymentIntentResponse | null>(null);
   const [intentError, setIntentError] = useState<string | null>(null);
+  const [intentLoadAttempt, setIntentLoadAttempt] = useState(0);
 
   const stripePromise = useMemo(() => getStripePromise(), []);
 
@@ -349,7 +397,7 @@ export default function PaymentFirstBookingDialog({
     };
 
     loadPaymentIntent();
-  }, [open, slot]);
+  }, [open, slot, intentLoadAttempt]);
 
   const closeDialog = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -444,10 +492,20 @@ export default function PaymentFirstBookingDialog({
         )}
 
         {intentError && !loadingIntent && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{intentError}</AlertDescription>
-          </Alert>
+          <div className="space-y-3">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{intentError}</AlertDescription>
+            </Alert>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setIntentLoadAttempt((prev) => prev + 1)}
+            >
+              Retry payment setup
+            </Button>
+          </div>
         )}
 
         {!loadingIntent && paymentIntent?.clientSecret && !intentError && (

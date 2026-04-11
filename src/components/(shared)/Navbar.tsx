@@ -18,9 +18,11 @@ import {
   BookOpen,
   Calendar,
   Clock,
+  FileText,
   Home,
   LogOut,
   Menu,
+  MessageSquare,
   Search,
   Shield,
   User,
@@ -33,20 +35,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ModeToggle } from "./ModeToggle";
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: "ADMIN" | "STUDENT" | "TUTOR";
-  avatar?: string;
-}
-
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const { user, setUser } = useAuthStore();
 
@@ -58,7 +51,6 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     UserLogOut();
-    setLoading(true);
     toast.success("Logged out successfully");
     setUser(null);
     router.push("/");
@@ -85,6 +77,16 @@ const Navbar = () => {
       label: "My Bookings",
       icon: <Calendar className="h-4 w-4" />,
     },
+    {
+      href: "/chats",
+      label: "Chats",
+      icon: <MessageSquare className="h-4 w-4" />,
+    },
+    {
+      href: "/invoices",
+      label: "Invoices",
+      icon: <FileText className="h-4 w-4" />,
+    },
   ];
 
   const tutorNavItems = [
@@ -97,6 +99,11 @@ const Navbar = () => {
       href: "/availability-slot",
       label: "Availability",
       icon: <Clock className="h-4 w-4" />,
+    },
+    {
+      href: "/chats",
+      label: "Chats",
+      icon: <MessageSquare className="h-4 w-4" />,
     },
     {
       href: "/profile",
@@ -159,7 +166,7 @@ const Navbar = () => {
     <nav
       className={`sticky top-0 z-50 w-full border-b bg-background transition-all duration-200 ${
         scrolled
-          ? "backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm"
+          ? "backdrop-blur supports-backdrop-filter:bg-background/80 shadow-sm"
           : ""
       }`}
     >
@@ -206,7 +213,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 rounded-full">
                     <Avatar>
-                      <AvatarImage src={user.avatar} />
+                      <AvatarImage src={user.image} />
                       <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </Button>

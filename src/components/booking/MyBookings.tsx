@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Edit,
+  MessageSquare,
   Star,
   Trash2,
   X,
@@ -41,6 +42,7 @@ import {
   getBookings,
   patchBookingStatus,
 } from "@/services/booking";
+import { downloadInvoicePdf } from "@/services/invoice";
 import { Booking, UserRole } from "@/types/booking/types";
 import { ReviewModal } from "./ReviewModal";
 
@@ -112,6 +114,8 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     null,
   );
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [downloadingInvoiceBookingId, setDownloadingInvoiceBookingId] =
+    useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<Booking["status"] | "ALL">(
     "ALL",
   );
@@ -218,6 +222,20 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       toast.success("Deleted");
     } catch {
       toast.error("Delete failed");
+    }
+  };
+
+  const handleDownloadInvoice = async (bookingId: string) => {
+    setDownloadingInvoiceBookingId(bookingId);
+    try {
+      await downloadInvoicePdf(bookingId);
+      toast.success("Invoice downloaded");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to download invoice";
+      toast.error(message);
+    } finally {
+      setDownloadingInvoiceBookingId(null);
     }
   };
 
@@ -434,6 +452,15 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                   </CardContent>
                 )}
 
+                {booking.status === "CANCELLED" &&
+                  booking.paymentStatus === "REFUNDED" && (
+                    <CardContent className="pt-0 pb-2">
+                      <p className="text-xs text-rose-600">
+                        Refund processed for this booking.
+                      </p>
+                    </CardContent>
+                  )}
+
                 <CardFooter className="flex flex-wrap justify-end gap-2 border-t bg-muted/5 px-6 py-3">
                   {/* Tutor actions */}
                   {userRole === Roles.tutor && booking.status === "PENDING" && (
@@ -474,9 +501,37 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                       </Button>
                     )}
 
+                  {(userRole === Roles.student || userRole === Roles.tutor) &&
+                    booking.status !== "CANCELLED" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => router.push(`/chats/${booking.id}`)}
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" /> Chat
+                      </Button>
+                    )}
+
                   {/* Student actions */}
                   {userRole === Roles.student && (
                     <>
+                      {(booking.paymentStatus === "PAID" ||
+                        booking.paymentStatus === "TRANSFERRED" ||
+                        booking.paymentStatus === "REFUNDED") && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          onClick={() => handleDownloadInvoice(booking.id)}
+                          disabled={downloadingInvoiceBookingId === booking.id}
+                        >
+                          {downloadingInvoiceBookingId === booking.id
+                            ? "Downloading..."
+                            : "Download Invoice"}
+                        </Button>
+                      )}
+
                       {(booking.status === "PENDING" ||
                         booking.status === "CONFIRMED") && (
                         <Button

@@ -1,4 +1,5 @@
 import AuthProvider from "@/components/providers/AuthProvider";
+import { ChatProvider } from "@/components/providers/ChatProvider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
@@ -36,7 +37,9 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ChatProvider>{children}</ChatProvider>
+          </AuthProvider>
 
           <Toaster richColors></Toaster>
         </ThemeProvider>
