@@ -79,6 +79,32 @@ const statusConfig: Record<
   },
 };
 
+const paymentStatusConfig: Record<
+  string,
+  { label: string; className: string }
+> = {
+  PENDING: {
+    label: "Payment pending",
+    className: "bg-amber-50 text-amber-700",
+  },
+  PAID: {
+    label: "Paid",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  TRANSFERRED: {
+    label: "Transferred",
+    className: "bg-blue-50 text-blue-700",
+  },
+  REFUNDED: {
+    label: "Refunded",
+    className: "bg-rose-50 text-rose-700",
+  },
+  FAILED: {
+    label: "Payment failed",
+    className: "bg-rose-50 text-rose-700",
+  },
+};
+
 export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,20 +135,34 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     fetchBookings();
   }, [userRole, userId]);
 
+  useEffect(() => {
+    const handleBookingUpdated = () => {
+      fetchBookings();
+    };
+
+    window.addEventListener("booking:updated", handleBookingUpdated);
+
+    return () => {
+      window.removeEventListener("booking:updated", handleBookingUpdated);
+    };
+  }, [userRole, userId]);
+
   const updateBookingStatus = async (
     bookingId: string,
     newStatus: Booking["status"],
   ) => {
     try {
       const response = await patchBookingStatus(bookingId, newStatus);
-
-      toast.success("Booking status updated successfully!");
+      if (!response?.success) {
+        throw new Error(response?.message || "Update failed");
+      }
 
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b)),
       );
 
       toast.success("Status updated");
+      window.dispatchEvent(new CustomEvent("booking:updated"));
     } catch {
       toast.error("Update failed");
     }
@@ -247,6 +287,16 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
 
   return (
     <div className="space-y-6">
+      {userRole === Roles.tutor && (
+        <Card className="rounded-2xl border-dashed bg-muted/20">
+          <CardContent className="py-4 text-sm text-muted-foreground">
+            Confirm sessions after payment is marked paid. Confirming allows
+            payout routing to your connected Stripe account, and cancellations
+            trigger automatic refund handling.
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filter tabs */}
       <Tabs
         defaultValue="ALL"
@@ -286,7 +336,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
             >
-              <Card className="group relative overflow-hidden rounded-2xl border-0 bg-gradient-to-br from-background to-muted/20 shadow-md hover:shadow-xl transition-all duration-300">
+              <Card className="group relative overflow-hidden rounded-2xl border-0 bg-linear-to-br from-background to-muted/20 shadow-md hover:shadow-xl transition-all duration-300">
                 {/* Status bar */}
                 <div
                   className={`absolute left-0 top-0 h-full w-1.5 ${status.bg}`}
@@ -352,14 +402,25 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                     </div>
                   </div>
 
-                  <Badge
-                    className={`${status.bg} ${status.color} border-0 rounded-full px-3 py-1 text-xs font-medium`}
-                  >
-                    <span
-                      className={`mr-1.5 h-2 w-2 rounded-full ${status.dot}`}
-                    />
-                    {status.label}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {booking.paymentStatus && (
+                      <Badge
+                        variant="secondary"
+                        className={`rounded-full px-3 py-1 text-xs font-medium border-0 ${paymentStatusConfig[booking.paymentStatus]?.className || "bg-slate-100 text-slate-700"}`}
+                      >
+                        {paymentStatusConfig[booking.paymentStatus]?.label ||
+                          `Payment ${booking.paymentStatus.toLowerCase()}`}
+                      </Badge>
+                    )}
+                    <Badge
+                      className={`${status.bg} ${status.color} border-0 rounded-full px-3 py-1 text-xs font-medium`}
+                    >
+                      <span
+                        className={`mr-1.5 h-2 w-2 rounded-full ${status.dot}`}
+                      />
+                      {status.label}
+                    </Badge>
+                  </div>
                 </CardHeader>
 
                 {booking.review && (
@@ -367,7 +428,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                     <div className="flex items-start gap-2 text-sm">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mt-0.5" />
                       <span className="text-muted-foreground line-clamp-2">
-                        "{booking.review.comment}"
+                        &ldquo;{booking.review.comment}&rdquo;
                       </span>
                     </div>
                   </CardContent>

@@ -3,6 +3,19 @@ export interface Booking {
   studentId: string;
   tutorId: string;
   slotId: string;
+  paymentIntentId?: string;
+  paymentStatus?:
+    | "PENDING"
+    | "PAID"
+    | "TRANSFERRED"
+    | "REFUNDED"
+    | "FAILED"
+    | string;
+  payoutStatus?: "PENDING" | "TRANSFERRED" | "FAILED" | string;
+  totalAmountCents?: number;
+  commissionAmountCents?: number;
+  tutorAmountCents?: number;
+  isReviewed?: boolean;
   role: "STUDENT" | "TUTOR" | "ADMIN";
   date: string; // ISO string
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";

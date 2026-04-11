@@ -104,16 +104,16 @@ const TutorDetailsPage = ({
   return (
     <div className="bg-background min-h-screen">
       {/* Cover Image - Using user image as cover */}
-      <div className="relative h-64 md:h-80 lg:h-96 bg-gradient-to-r from-primary/20 to-primary/5">
+      <div className="relative h-64 md:h-80 lg:h-96 bg-linear-to-r from-primary/20 to-primary/5">
         {tutor.user?.image ? (
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${tutor.user.image})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,.05)_50%,transparent_75%)] bg-[length:20px_20px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,.05)_50%,transparent_75%)] bg-size-[20px_20px]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
       </div>
 
       {/* Main Content */}
@@ -454,7 +454,7 @@ const TutorDetailsPage = ({
                     <Separator className="my-6" />
 
                     {/* Reviews List */}
-                    <ScrollArea className="h-[400px] pr-4">
+                    <ScrollArea className="h-100 pr-4">
                       <div className="space-y-6">
                         {/* You'll need to add reviews to your data structure */}
                         <div className="text-center py-8 text-muted-foreground">
@@ -483,6 +483,7 @@ const TutorDetailsPage = ({
                       {/* You'll need to add availability to your data structure */}
                       <AvailableSlotsForBooking
                         tutorId={tutor.id}
+                        tutorHourlyRate={tutor.pricePerHr}
                       ></AvailableSlotsForBooking>
                       <div className="text-center py-8 text-muted-foreground">
                         No availability slots added yet.
@@ -509,7 +510,7 @@ const TutorDetailsPage = ({
           <div className="lg:col-span-1 space-y-6">
             {/* Booking Card */}
             <Card className="sticky top-24 border-2 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+              <CardHeader className="bg-linear-to-r from-primary/5 to-primary/10">
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
                   Book a Session
@@ -551,6 +552,7 @@ const TutorDetailsPage = ({
                 <div>
                   <AvailableSlotsForBooking
                     tutorId={tutor.id}
+                    tutorHourlyRate={tutor.pricePerHr}
                   ></AvailableSlotsForBooking>
                 </div>
                 {/* Quick Stats */}

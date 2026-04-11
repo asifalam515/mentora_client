@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Loader2 } from "lucide-react";
+import { Check, ExternalLink, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -43,9 +43,11 @@ const profileSchema = z.object({
   experience: z.number().min(0, "Cannot be negative").optional(),
 });
 
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
 interface ProfileInfoFormProps {
   profile: StudentProfile | TutorProfile | AdminProfile;
-  onUpdate: (updated: any) => void;
+  onUpdate: (updated: StudentProfile | TutorProfile | AdminProfile) => void;
 }
 
 export default function ProfileInfoForm({
@@ -58,11 +60,15 @@ export default function ProfileInfoForm({
   const [allCategories, setAllCategories] = useState<
     { id: string; name: string }[]
   >([]);
+  const [stripeConnectLoading, setStripeConnectLoading] = useState(false);
+  const [stripeAccountId, setStripeAccountId] = useState(
+    isTutor ? (profile as TutorProfile).stripeConnectedAccountId || "" : "",
+  );
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     isTutor ? (profile as TutorProfile).categories?.map((c) => c.id) || [] : [],
   );
   console.log(profile);
-  const form = useForm({
+  const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: profile.name || "",
@@ -82,18 +88,23 @@ export default function ProfileInfoForm({
     }
   }, [isTutor]);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: ProfileFormValues) => {
     try {
       // Prepare payload: only include tutor fields if role is TUTOR
       const payload = isTutor
-        ? { ...values, categoryIds: selectedCategoryIds }
+        ? {
+            ...values,
+            categoryIds: selectedCategoryIds,
+            stripeConnectedAccountId: stripeAccountId || undefined,
+          }
         : { name: values.name, email: values.email };
 
       const updated = await updateProfile(payload);
       toast.success("Profile updated successfully");
-      onUpdate(updated);
-    } catch (err: any) {
-      toast.error(err.message || "Update failed");
+      onUpdate(updated as StudentProfile | TutorProfile | AdminProfile);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Update failed";
+      toast.error(message);
     }
   };
 
@@ -101,6 +112,44 @@ export default function ProfileInfoForm({
     setSelectedCategoryIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
+  };
+
+  const handleConnectStripe = async () => {
+    setStripeConnectLoading(true);
+
+    const endpoints = [
+      `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles/stripe/connect-link`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles/connect-stripe`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}/payments/stripe/connect-link`,
+    ];
+
+    try {
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const result = await response.json().catch(() => ({}));
+        const connectUrl =
+          result?.url || result?.data?.url || result?.accountLink;
+
+        if (connectUrl) {
+          window.location.href = connectUrl;
+          return;
+        }
+      }
+
+      toast.error("Could not start Stripe onboarding. Please contact support.");
+    } catch (error) {
+      toast.error("Failed to start Stripe onboarding");
+    } finally {
+      setStripeConnectLoading(false);
+    }
   };
 
   return (
@@ -251,6 +300,52 @@ export default function ProfileInfoForm({
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="space-y-4 rounded-lg border p-4 bg-muted/20">
+                  <div className="flex flex-col gap-1">
+                    <p className="font-medium">Stripe payout setup</p>
+                    <p className="text-xs text-muted-foreground">
+                      Connect Stripe so confirmed sessions can pay out to your
+                      connected account.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <div className="space-y-2">
+                      <FormLabel>Connected Account ID (optional)</FormLabel>
+                      <Input
+                        value={stripeAccountId}
+                        onChange={(e) => setStripeAccountId(e.target.value)}
+                        placeholder="acct_..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        If your backend supports automatic onboarding links, use
+                        the connect button below.
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleConnectStripe}
+                      disabled={stripeConnectLoading}
+                      className="gap-2"
+                    >
+                      {stripeConnectLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ExternalLink className="h-4 w-4" />
+                      )}
+                      Connect Stripe
+                    </Button>
+                  </div>
+
+                  <Badge variant="secondary" className="w-fit">
+                    {(profile as TutorProfile).stripeOnboardingComplete
+                      ? "Payouts enabled"
+                      : "Payout setup required"}
+                  </Badge>
                 </div>
               </div>
             )}

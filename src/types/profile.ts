@@ -5,8 +5,8 @@ export interface StudentProfile {
   image?: string | null;
   role: "STUDENT";
   createdAt: string;
-  bookings?: any[];
-  reviews?: any[];
+  bookings?: unknown[];
+  reviews?: unknown[];
 }
 
 export interface TutorProfile {
@@ -25,6 +25,8 @@ export interface TutorProfile {
   availability: AvailabilitySlot[];
   totalReviews?: number;
   completedSessions?: number;
+  stripeConnectedAccountId?: string | null;
+  stripeOnboardingComplete?: boolean;
 }
 
 export interface AdminProfile {

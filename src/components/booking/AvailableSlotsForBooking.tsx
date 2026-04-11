@@ -1,10 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { Calendar, Clock, Loader2, XCircle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Calendar, Clock, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import PaymentFirstBookingDialog from "@/components/booking/PaymentFirstBookingDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,19 +28,21 @@ interface AvailabilitySlot {
 
 interface AvailableSlotsForBookingProps {
   tutorId: string;
+  tutorHourlyRate?: number;
   onBookingSuccess?: () => void;
 }
 
 const AvailableSlotsForBooking = ({
   tutorId,
+  tutorHourlyRate,
   onBookingSuccess,
 }: AvailableSlotsForBookingProps) => {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [bookingInProgress, setBookingInProgress] = useState<string | null>(
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(
     null,
   );
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
 
   const fetchSlots = async () => {
@@ -68,7 +71,7 @@ const AvailableSlotsForBooking = ({
     }
   }, [tutorId]);
 
-  const handleBookSlot = async (slotId: string) => {
+  const handleBookSlot = (slotId: string) => {
     if (!user) {
       toast.error("Please log in to book a session");
       return;
@@ -83,57 +86,13 @@ const AvailableSlotsForBooking = ({
       return;
     }
 
-    // Prevent double-click
-    if (bookingInProgress === slotId) return;
+    setSelectedSlot(slot);
+    setPaymentDialogOpen(true);
+  };
 
-    setBookingInProgress(slotId);
-
-    abortControllerRef.current = new AbortController();
-    const { signal } = abortControllerRef.current;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            studentId: user.id,
-            slotId,
-          }),
-          signal,
-        },
-      );
-
-      if (signal.aborted) return;
-
-      if (!response.ok) {
-        let errorMsg = "Booking failed";
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorData.error || errorMsg;
-        } catch {
-          // ignore
-        }
-        throw new Error(errorMsg);
-      }
-
-      // Success – mark slot as booked in UI
-      setSlots((prev) =>
-        prev.map((s) => (s.id === slotId ? { ...s, isBooked: true } : s)),
-      );
-
-      toast.success("Booking confirmed! 🎉");
-      onBookingSuccess?.();
-    } catch (error: any) {
-      if (error.name === "AbortError") return;
-      console.error("Booking error:", error);
-      toast.error(error.message || "Could not book slot");
-    } finally {
-      setBookingInProgress(null);
-      abortControllerRef.current = null;
-    }
+  const handlePaymentSuccess = async () => {
+    await fetchSlots();
+    onBookingSuccess?.();
   };
 
   const formatSlotTime = (start: string, end: string) => {
@@ -168,7 +127,7 @@ const AvailableSlotsForBooking = ({
             <Clock className="h-14 w-14 mx-auto mb-4 opacity-20" />
             <p className="text-lg font-medium">No upcoming sessions</p>
             <p className="text-sm">
-              This tutor hasn't set any availability yet.
+              This tutor has not set any availability yet.
             </p>
           </div>
         ) : (
@@ -204,26 +163,18 @@ const AvailableSlotsForBooking = ({
                   <Button
                     size="sm"
                     onClick={() => handleBookSlot(slot.id)}
-                    disabled={isBooked || bookingInProgress === slot.id}
+                    disabled={isBooked}
                     variant={isAvailable ? "default" : "outline"}
                     className={`gap-2 ${
                       isBooked ? "cursor-not-allowed opacity-60" : ""
                     }`}
                   >
-                    {bookingInProgress === slot.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : isBooked ? (
+                    {isBooked ? (
                       <XCircle className="h-4 w-4" />
                     ) : (
                       <Calendar className="h-4 w-4" />
                     )}
-                    {bookingInProgress === slot.id
-                      ? "Booking..."
-                      : isBooked
-                        ? isPast
-                          ? "Passed"
-                          : "Booked"
-                        : "Book"}
+                    {isBooked ? (isPast ? "Passed" : "Booked") : "Pay and Book"}
                   </Button>
                 </div>
               );
@@ -231,6 +182,14 @@ const AvailableSlotsForBooking = ({
           </div>
         )}
       </CardContent>
+
+      <PaymentFirstBookingDialog
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        slot={selectedSlot}
+        tutorHourlyRate={tutorHourlyRate}
+        onSuccess={handlePaymentSuccess}
+      />
     </Card>
   );
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import PaymentFirstBookingDialog from "@/components/booking/PaymentFirstBookingDialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +13,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { Calendar, Clock, Loader2, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -37,10 +37,7 @@ export function CreateBooking({
   onSuccess,
   onCancel,
 }: CreateBookingProps) {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [studentId, setStudentId] = useState<string | null>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [slotDetails, setSlotDetails] = useState<{
     tutorName: string;
     startTime: string;
@@ -50,30 +47,7 @@ export function CreateBooking({
   } | null>(null);
   const [fetchingSlot, setFetchingSlot] = useState(false);
 
-  // 1. Get student ID from session
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        // const { data, error } = await userService.getSession();
-        if (error || !data?.user) {
-          toast.info("Please log in to book a session.", {
-            id: "login-required",
-          });
-          router.push("/login?callbackUrl=" + window.location.pathname);
-          return;
-        }
-        // Ensure the user is a student (optional – backend will validate role)
-        setStudentId(data.user.id);
-      } catch (err) {
-        console.error("Session error:", err);
-      } finally {
-        setLoadingSession(false);
-      }
-    };
-    loadSession();
-  }, [router]);
-
-  // 2. If props missing, fetch slot details from API
+  // If props are missing, fetch slot details from API.
   useEffect(() => {
     if (!slotId) return;
     if (tutorName && startTime && endTime && price !== undefined && subject) {
@@ -107,47 +81,7 @@ export function CreateBooking({
     fetchSlotDetails();
   }, [slotId, tutorName, startTime, endTime, price, subject]);
 
-  const handleBooking = async () => {
-    if (!studentId) {
-      toast.error("You must be logged in to book a session.", {
-        id: "not-logged-in",
-      });
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/bookings`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId,
-            slotId,
-          }),
-        },
-      );
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Booking failed");
-      }
-      toast.success("Booking confirmed! Check your dashboard for details.", {
-        id: "booking-success",
-      });
-      if (onSuccess) onSuccess();
-      // Optionally redirect to bookings page after a short delay
-    } catch (error: any) {
-      toast.error(
-        error.message || "An error occurred while booking. Please try again.",
-        { id: "booking-error" },
-      );
-      console.error("Booking error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (loadingSession || fetchingSlot) {
+  if (fetchingSlot) {
     return (
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-6 flex justify-center">
@@ -236,15 +170,23 @@ export function CreateBooking({
             Cancel
           </Button>
         )}
-        <Button
-          onClick={handleBooking}
-          disabled={isSubmitting}
-          className="flex-1 gap-2"
-        >
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isSubmitting ? "Booking..." : "Confirm Booking"}
+        <Button onClick={() => setDialogOpen(true)} className="flex-1 gap-2">
+          <Calendar className="h-4 w-4" />
+          Pay and Book
         </Button>
       </CardFooter>
+
+      <PaymentFirstBookingDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        slot={{
+          id: slotId,
+          startTime: slotDetails.startTime,
+          endTime: slotDetails.endTime,
+        }}
+        tutorHourlyRate={slotDetails.price}
+        onSuccess={onSuccess}
+      />
     </Card>
   );
 }
