@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Roles } from "@/constants/roles";
+import { unregisterNotificationDeviceToken } from "@/hooks/useNotifications";
 import { UserLogOut } from "@/services/auth";
 import { useAuthStore } from "@/store/useAuthStore.ts";
 import {
@@ -50,7 +51,13 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = async () => {
-    UserLogOut();
+    try {
+      await unregisterNotificationDeviceToken();
+    } catch (error) {
+      console.error("Failed to unregister device token:", error);
+    }
+
+    await UserLogOut();
     toast.success("Logged out successfully");
     setUser(null);
     router.push("/");

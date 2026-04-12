@@ -16,7 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTutorAvailability, isPastAvailabilitySlot } from "@/lib/booking";
+import { getTutorAvailability } from "@/lib/booking";
+import { isPastAvailabilitySlot } from "@/lib/booking/utils";
 import { useAuthStore } from "@/store/useAuthStore.ts";
 
 interface AvailabilitySlot {

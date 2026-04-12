@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { isPastAvailabilitySlot } from "@/lib/booking";
+import { isPastAvailabilitySlot } from "@/lib/booking/utils";
 import { getStripePromise, hasStripePublishableKey } from "@/lib/stripe";
 
 interface SlotSummary {
