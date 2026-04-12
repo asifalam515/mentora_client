@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isValidChatBookingId, resolveChatBookingId } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import {
   getChatConversations,
@@ -117,6 +118,7 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
   const [selectedConversationBookingId, setSelectedConversationBookingId] =
     useState<string | undefined>(bookingId);
   const typingStopTimer = useRef<number | null>(null);
+  const bookingResolutionAttemptRef = useRef<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const userScrolledAwayRef = useRef(false);
   const {
@@ -169,20 +171,55 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
     }
   }, []);
 
+  const activateConversation = useCallback(
+    async (detail: ChatConversationDetail, targetBookingId?: string) => {
+      setActiveConversation(detail);
+      setMessages(detail.messages || []);
+      setSelectedConversationBookingId(targetBookingId ?? detail.bookingId);
+      joinConversation(detail.id);
+      await markConversationAsRead(detail.id);
+      markMessageRead(detail.id);
+      window.dispatchEvent(new CustomEvent("booking:updated"));
+    },
+    [joinConversation, markMessageRead],
+  );
+
   const selectConversationFromBooking = useCallback(
     async (targetBookingId: string) => {
+      if (!isValidChatBookingId(targetBookingId)) {
+        setAccessDenied("Invalid booking reference.");
+        setActiveConversation(null);
+        setMessages([]);
+        setLoadingMessages(false);
+        return;
+      }
+
       setAccessDenied(null);
       setLoadingMessages(true);
 
       try {
+        const existingConversation = conversations.find(
+          (conversation) =>
+            conversation.bookingId === targetBookingId ||
+            conversation.booking.id === targetBookingId,
+        );
+
+        if (existingConversation) {
+          const messages = await getConversationMessages(
+            existingConversation.id,
+          );
+          await activateConversation(
+            {
+              ...existingConversation,
+              messages,
+            },
+            targetBookingId,
+          );
+          return;
+        }
+
         const detail = await getOrCreateBookingConversation(targetBookingId);
-        setActiveConversation(detail);
-        setMessages(detail.messages || []);
-        setSelectedConversationBookingId(targetBookingId);
-        joinConversation(detail.id);
-        await markConversationAsRead(detail.id);
-        markMessageRead(detail.id);
-        window.dispatchEvent(new CustomEvent("booking:updated"));
+        await activateConversation(detail, targetBookingId);
       } catch (error: unknown) {
         const message =
           error instanceof Error ? error.message : "Unable to open chat";
@@ -194,7 +231,7 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
         setLoadingMessages(false);
       }
     },
-    [joinConversation, markMessageRead],
+    [activateConversation, conversations],
   );
 
   useEffect(() => {
@@ -202,11 +239,20 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
   }, [loadConversations]);
 
   useEffect(() => {
-    if (bookingId) {
-      setSelectedConversationBookingId(bookingId);
-      selectConversationFromBooking(bookingId);
+    const resolvedBookingId = resolveChatBookingId(bookingId);
+
+    if (!resolvedBookingId || !conversations.length) {
+      return;
     }
-  }, [bookingId, selectConversationFromBooking]);
+
+    if (bookingResolutionAttemptRef.current === resolvedBookingId) {
+      return;
+    }
+
+    bookingResolutionAttemptRef.current = resolvedBookingId;
+    setSelectedConversationBookingId(resolvedBookingId);
+    selectConversationFromBooking(resolvedBookingId);
+  }, [bookingId, conversations, selectConversationFromBooking]);
 
   useEffect(() => {
     const unsubscribeMessage = onMessage((payload) => {
@@ -299,8 +345,18 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
   const handleSelectConversation = async (
     conversation: ChatConversationSummary,
   ) => {
-    setSelectedConversationBookingId(conversation.bookingId);
-    router.push(`/chats/${conversation.bookingId}`);
+    const resolvedBookingId = resolveChatBookingId(
+      conversation.bookingId,
+      conversation.booking.id,
+    );
+
+    if (!resolvedBookingId) {
+      toast.error("This conversation has an invalid booking reference.");
+      return;
+    }
+
+    setSelectedConversationBookingId(resolvedBookingId);
+    router.push(`/chats/${resolvedBookingId}`);
   };
 
   const handleTyping = (value: string) => {

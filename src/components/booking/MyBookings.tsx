@@ -37,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { Roles } from "@/constants/roles";
+import { resolveChatBookingId } from "@/lib/chat";
 import {
   deleteBookingService,
   getBookings,
@@ -120,6 +121,12 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     "ALL",
   );
   const router = useRouter();
+  const getBookingChatId = (booking: Booking) =>
+    resolveChatBookingId(
+      booking.id,
+      (booking as Booking & { _id?: string })._id,
+      (booking as Booking & { bookingId?: string }).bookingId,
+    );
   const fetchBookings = async () => {
     if (!userId) return;
 
@@ -502,16 +509,25 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                     )}
 
                   {(userRole === Roles.student || userRole === Roles.tutor) &&
-                    booking.status !== "CANCELLED" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        onClick={() => router.push(`/chats/${booking.id}`)}
-                      >
-                        <MessageSquare className="mr-2 h-4 w-4" /> Chat
-                      </Button>
-                    )}
+                    booking.status !== "CANCELLED" &&
+                    (() => {
+                      const chatId = getBookingChatId(booking);
+
+                      if (!chatId) {
+                        return null;
+                      }
+
+                      return (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          onClick={() => router.push(`/chats/${chatId}`)}
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4" /> Chat
+                        </Button>
+                      );
+                    })()}
 
                   {/* Student actions */}
                   {userRole === Roles.student && (

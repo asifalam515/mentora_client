@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { resolveChatBookingId } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { ChatConversationSummary } from "@/types/chat/types";
 
@@ -68,7 +69,11 @@ export default function ConversationList({
           conversation,
           currentUserId,
         );
-        const isActive = activeBookingId === conversation.bookingId;
+        const resolvedBookingId = resolveChatBookingId(
+          conversation.bookingId,
+          conversation.booking.id,
+        );
+        const isActive = activeBookingId === resolvedBookingId;
         const preview = conversation.lastMessage?.text
           ? conversation.lastMessage.text
           : conversation.lastMessage?.fileName
@@ -132,9 +137,18 @@ export default function ConversationList({
         );
 
         if (onSelect) {
+          if (!resolvedBookingId) {
+            return (
+              <div key={conversation.id} className="w-full text-left">
+                {content}
+              </div>
+            );
+          }
+
           return (
             <button
               key={conversation.id}
+              type="button"
               onClick={() => onSelect(conversation)}
               className="w-full text-left"
             >
@@ -143,8 +157,12 @@ export default function ConversationList({
           );
         }
 
+        if (!resolvedBookingId) {
+          return <div key={conversation.id}>{content}</div>;
+        }
+
         return (
-          <Link key={conversation.id} href={`/chats/${conversation.bookingId}`}>
+          <Link key={conversation.id} href={`/chats/${resolvedBookingId}`}>
             {content}
           </Link>
         );
