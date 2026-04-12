@@ -9,7 +9,13 @@ import {
   initializeFirebase,
   onFirebaseMessage,
 } from "@/config/firebase";
+import {
+  registerNotificationDeviceToken,
+  sendNotificationTest,
+  unregisterNotificationDeviceTokenApi,
+} from "@/services/notifications";
 import { useAuthStore } from "@/store/useAuthStore.ts";
+import { useNotificationStore } from "@/store/useNotificationStore";
 
 const LOCAL_FCM_TOKEN_KEY = "fcm_device_token";
 
@@ -33,30 +39,6 @@ const hasRequiredFirebaseConfig = () => {
   ];
 
   return required.every((value) => Boolean(value && value.trim().length > 0));
-};
-
-const getRawApiBase = () =>
-  process.env.NEXT_PUBLIC_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.REACT_APP_API_URL ||
-  "http://localhost:5000/api/v1";
-
-const normalizeApiBase = () => {
-  const base = getRawApiBase().replace(/\/$/, "");
-  return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
-};
-
-const getAuthToken = () => {
-  if (typeof document === "undefined") return null;
-
-  const cookieToken = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith("token="))
-    ?.split("=")[1];
-
-  if (cookieToken) return decodeURIComponent(cookieToken);
-
-  return localStorage.getItem("authToken");
 };
 
 const getServiceWorkerUrl = () => {
@@ -121,59 +103,46 @@ export const navigateToNotificationTarget = (data: Record<string, string>) => {
   }
 };
 
-const registerDeviceTokenOnBackend = async (token: string) => {
-  const authToken = getAuthToken();
-  if (!authToken) return;
-
-  const response = await fetch(
-    `${normalizeApiBase()}/notifications/device-tokens`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      credentials: "include",
-      body: JSON.stringify({ token, platform: "web" }),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(await response.text());
-  }
-};
-
 export const unregisterNotificationDeviceToken = async () => {
   if (typeof window === "undefined") return;
 
   const token = localStorage.getItem(LOCAL_FCM_TOKEN_KEY);
-  const authToken = getAuthToken();
+  if (!token) return;
 
-  if (!token || !authToken) return;
-
-  await fetch(`${normalizeApiBase()}/notifications/device-tokens/unregister`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-    credentials: "include",
-    body: JSON.stringify({ token }),
-  });
+  await unregisterNotificationDeviceTokenApi(token);
 
   localStorage.removeItem(LOCAL_FCM_TOKEN_KEY);
+  useNotificationStore.getState().setTokenRegistered(false);
+  useNotificationStore.getState().setTokenStatus("unregistered");
 };
 
+export const sendTestPushNotification = sendNotificationTest;
+
 export const useNotifications = () => {
-  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.user?.id);
+  const setPermission = useNotificationStore((state) => state.setPermission);
+  const setTokenStatus = useNotificationStore((state) => state.setTokenStatus);
+  const setTokenRegistered = useNotificationStore(
+    (state) => state.setTokenRegistered,
+  );
+  const setLastError = useNotificationStore((state) => state.setLastError);
 
   useEffect(() => {
-    if (!user || typeof window === "undefined") return;
+    if (!userId || typeof window === "undefined") return;
+
+    if (!("Notification" in window)) {
+      setPermission("unsupported");
+      return;
+    }
+
+    setPermission(Notification.permission);
 
     if (!hasRequiredFirebaseConfig()) {
       console.warn(
         "Skipping notifications setup: missing Firebase env configuration.",
       );
+      setTokenStatus("failed");
+      setLastError("Missing Firebase configuration");
       return;
     }
 
@@ -181,16 +150,17 @@ export const useNotifications = () => {
 
     const setupNotifications = async () => {
       try {
-        if (!("Notification" in window)) return;
-
         if (Notification.permission === "denied") {
           console.warn(
             "Notifications are blocked in browser settings. Enable them to receive push notifications.",
           );
+          setPermission("denied");
+          setTokenStatus("failed");
           return;
         }
 
         const permission = await Notification.requestPermission();
+        setPermission(permission);
         if (permission !== "granted") return;
 
         if (!("serviceWorker" in navigator)) return;
@@ -219,9 +189,14 @@ export const useNotifications = () => {
         const existing = localStorage.getItem(LOCAL_FCM_TOKEN_KEY);
 
         if (existing !== token) {
-          await registerDeviceTokenOnBackend(token);
+          setTokenStatus("registering");
+          await registerNotificationDeviceToken(token);
           localStorage.setItem(LOCAL_FCM_TOKEN_KEY, token);
         }
+
+        setTokenRegistered(true);
+        setTokenStatus("registered");
+        setLastError(null);
 
         unsubscribeForeground = onFirebaseMessage(messaging, (payload) => {
           const title = payload.notification?.title || "Notification";
@@ -237,14 +212,23 @@ export const useNotifications = () => {
           });
         });
       } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to set up notifications";
+
         if (error instanceof DOMException && error.name === "AbortError") {
           console.warn(
             "Push registration failed (AbortError). This usually means browser push service rejected the subscription (commonly due to VAPID/project mismatch or stale service worker).",
           );
+          setTokenStatus("failed");
+          setLastError(errorMessage);
           return;
         }
 
         console.error("Notification setup error:", error);
+        setTokenStatus("failed");
+        setLastError(errorMessage);
       }
     };
 
@@ -253,5 +237,5 @@ export const useNotifications = () => {
     return () => {
       if (unsubscribeForeground) unsubscribeForeground();
     };
-  }, [user?.id]);
+  }, [setLastError, setPermission, setTokenRegistered, setTokenStatus, userId]);
 };

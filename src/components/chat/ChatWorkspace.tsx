@@ -32,6 +32,7 @@ import {
   getConversationMessages,
   getOrCreateBookingConversation,
   markConversationAsRead,
+  sendConversationMessage,
   uploadChatAttachment,
 } from "@/services/chat";
 import { useAuthStore } from "@/store/useAuthStore.ts";
@@ -122,11 +123,14 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
   const bookingResolutionAttemptRef = useRef<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
   const userScrolledAwayRef = useRef(false);
+  const pollingRef = useRef<number | null>(null);
   const {
+    connected,
+    mode,
+    statusText,
     joinConversation,
     startTyping,
     stopTyping,
-    sendMessage,
     markMessageRead,
     onTyping,
     onMessage,
@@ -256,6 +260,10 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
   }, [bookingId, conversations, selectConversationFromBooking]);
 
   useEffect(() => {
+    if (mode !== "realtime" || !activeConversationId) {
+      return;
+    }
+
     const unsubscribeMessage = onMessage((payload) => {
       const { conversationId, message } = normalizeIncomingMessage(payload);
 
@@ -312,6 +320,7 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
       unsubscribeError();
     };
   }, [
+    mode,
     activeConversationId,
     currentUserId,
     loadConversations,
@@ -321,6 +330,39 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
     onReceipt,
     onError,
   ]);
+
+  useEffect(() => {
+    if (mode === "realtime") {
+      if (pollingRef.current) {
+        window.clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+
+    if (!activeConversationId) {
+      return;
+    }
+
+    pollingRef.current = window.setInterval(async () => {
+      try {
+        const [latestMessages] = await Promise.all([
+          getConversationMessages(activeConversationId),
+          loadConversations(),
+        ]);
+        setMessages(latestMessages);
+      } catch (error) {
+        console.warn("[chat] polling refresh failed", error);
+      }
+    }, 10000);
+
+    return () => {
+      if (pollingRef.current) {
+        window.clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [activeConversationId, loadConversations, mode]);
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -339,6 +381,10 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
     return () => {
       if (typingStopTimer.current) {
         window.clearTimeout(typingStopTimer.current);
+      }
+
+      if (pollingRef.current) {
+        window.clearInterval(pollingRef.current);
       }
     };
   }, []);
@@ -364,6 +410,10 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
     setMessageText(value);
     if (!activeConversationId) return;
 
+    if (mode !== "realtime") {
+      return;
+    }
+
     startTyping(activeConversationId);
 
     if (typingStopTimer.current) {
@@ -379,32 +429,59 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
     if (!activeConversationId) return;
     if (!messageText.trim() && !attachmentFile) return;
 
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticCreatedAt = new Date().toISOString();
+    const optimisticText = messageText.trim();
+    let filePayload: {
+      fileUrl: string;
+      fileName: string;
+      fileType: string;
+      fileSize: number;
+    } | null = null;
+
     setSending(true);
     try {
-      let filePayload: {
-        fileUrl: string;
-        fileName: string;
-        fileType: string;
-        fileSize: number;
-      } | null = null;
-
       if (attachmentFile) {
         filePayload = await uploadChatAttachment(attachmentFile);
       }
 
-      sendMessage({
+      const optimisticMessage: ChatMessage = {
+        id: optimisticId,
         conversationId: activeConversationId,
-        text: messageText.trim() || undefined,
+        senderId: currentUserId || "unknown",
+        text: optimisticText || undefined,
+        fileUrl: filePayload?.fileUrl,
+        fileName: filePayload?.fileName,
+        fileType: filePayload?.fileType,
+        fileSize: filePayload?.fileSize,
+        createdAt: optimisticCreatedAt,
+      };
+
+      setMessages((current) => [...current, optimisticMessage]);
+
+      await sendConversationMessage(activeConversationId, {
+        text: optimisticText || undefined,
         fileUrl: filePayload?.fileUrl,
         fileName: filePayload?.fileName,
         fileType: filePayload?.fileType,
         fileSize: filePayload?.fileSize,
       });
 
+      const [latestMessages] = await Promise.all([
+        getConversationMessages(activeConversationId),
+        loadConversations(),
+      ]);
+      setMessages(latestMessages);
+
       setMessageText("");
       setAttachmentFile(null);
-      stopTyping(activeConversationId);
+      if (mode === "realtime") {
+        stopTyping(activeConversationId);
+      }
     } catch (error: unknown) {
+      setMessages((current) =>
+        current.filter((item) => item.id !== optimisticId),
+      );
       const message =
         error instanceof Error ? error.message : "Failed to send message";
       toast.error(message);
@@ -545,14 +622,27 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
                 </div>
 
                 <div className="hidden items-center gap-2 sm:flex">
+                  <Badge
+                    variant={connected ? "secondary" : "outline"}
+                    className="rounded-full"
+                  >
+                    {mode === "realtime" ? "Realtime" : "Refresh mode"}
+                  </Badge>
                   <Badge variant="secondary" className="rounded-full">
                     {currentConversationBooking?.status || "PENDING"}
                   </Badge>
                   <Badge variant="outline" className="rounded-full">
                     {currentConversationBooking?.paymentStatus || "PENDING"}
                   </Badge>
+                  {(currentConversationBooking?.payoutStatus === "PENDING" ||
+                    currentConversationBooking?.paymentStatus === "PAID") && (
+                    <Badge variant="outline" className="rounded-full">
+                      Transfer pending
+                    </Badge>
+                  )}
                 </div>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">{statusText}</p>
             </CardHeader>
 
             <div className="flex-1 min-h-0">
@@ -686,6 +776,28 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
               )}
 
               <div className="flex items-end gap-2">
+                {mode !== "realtime" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-2xl"
+                    onClick={async () => {
+                      if (!activeConversationId) return;
+                      try {
+                        const [latestMessages] = await Promise.all([
+                          getConversationMessages(activeConversationId),
+                          loadConversations(),
+                        ]);
+                        setMessages(latestMessages);
+                      } catch (error) {
+                        console.error("[chat] manual refresh failed", error);
+                        toast.error("Failed to refresh messages");
+                      }
+                    }}
+                  >
+                    Refresh
+                  </Button>
+                )}
                 <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border bg-background text-muted-foreground transition hover:border-primary/30 hover:text-primary">
                   <Paperclip className="h-4 w-4" />
                   <input

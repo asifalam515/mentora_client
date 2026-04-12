@@ -10,6 +10,7 @@ export interface ChatBookingSummary {
   date: string;
   status: "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";
   paymentStatus: "PENDING" | "PAID" | "TRANSFERRED" | "REFUNDED";
+  payoutStatus?: "PENDING" | "TRANSFERRED" | "FAILED" | string;
 }
 
 export interface ChatMessage {

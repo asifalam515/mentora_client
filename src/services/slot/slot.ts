@@ -1,51 +1,31 @@
-"use server";
-import { cookies } from "next/headers";
+"use client";
+
+import { apiJson } from "@/lib/api-client";
+import { FieldValues } from "react-hook-form";
 
 export const getSlot = async () => {
   try {
-    const store = await cookies();
-    const token = store.get("token")?.value;
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
+    return await apiJson<unknown>("/availability-slots", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
-    if (!res.ok) {
-      throw new Error("Failed to fetch slots");
-    }
-
-    return await res.json();
+    });
   } catch (error) {
     console.log(error);
     return null;
   }
 };
-export const createSlot = async (payload: any) => {
-  const store = await cookies();
-  const token = store.get("token")?.value;
+export const createSlot = async (payload: Record<string, unknown>) => {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify(payload),
+    return await apiJson<unknown>("/availability-slots", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
 
-    const data = await response.json();
-
-    return data;
+      body: JSON.stringify(payload),
+    });
   } catch (error) {
     console.error("Create slot error:", error);
     throw error; // let component handle toast
@@ -53,25 +33,12 @@ export const createSlot = async (payload: any) => {
 };
 export const deleteSlot = async (slotId: string) => {
   try {
-    const store = await cookies();
-    const token = store.get("token")?.value;
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/${slotId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+    return await apiJson<unknown>(`/availability-slots/${slotId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data?.message || "Failed to delete slot");
-    }
-
-    return data;
+    });
   } catch (error) {
     console.error("Delete slot error:", error);
     throw error; // let the component handle toast/error UI
@@ -82,30 +49,14 @@ export const updateSlot = async (
   updatedData: Partial<FieldValues>,
 ) => {
   try {
-    const store = await cookies();
-    const token = store.get("token")?.value;
-
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/availability-slots/${slotId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedData),
+    return await apiJson<unknown>(`/availability-slots/${slotId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Throw the backend error message or a fallback
-      throw new Error(data?.message || "Failed to update slot");
-    }
-
-    return data;
-  } catch (error: any) {
+      body: JSON.stringify(updatedData),
+    });
+  } catch (error: unknown) {
     console.error("Update slot error:", error);
     // Throwing the error allows your UI component's catch block to show the toast
     throw error;

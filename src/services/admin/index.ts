@@ -1,37 +1,16 @@
-"use server";
+"use client";
 
-import { cookies } from "next/headers";
+import { apiJson } from "@/lib/api-client";
 
 export const updateUserStatus = async (userId: string, newStatus: string) => {
-  const store = await cookies();
-  const token = store.get("token")?.value;
-
-  if (!token) {
-    console.error("No token found");
-    return { success: false, message: "Authentication required" };
-  }
-
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/admin/users/${userId}/status`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ include token
-        },
-        body: JSON.stringify({ status: newStatus }),
+    const result = await apiJson<unknown>(`/admin/users/${userId}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
-
-    const result = await res.json();
-
-    if (!res.ok) {
-      return {
-        success: false,
-        message: result?.message || "Failed to update user status",
-      };
-    }
+      body: JSON.stringify({ status: newStatus }),
+    });
 
     return { success: true, data: result };
   } catch (error) {

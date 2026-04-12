@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -108,6 +108,22 @@ const paymentStatusConfig: Record<
   },
 };
 
+const payoutStatusConfig: Record<string, { label: string; className: string }> =
+  {
+    PENDING: {
+      label: "Transfer pending",
+      className: "bg-amber-50 text-amber-700",
+    },
+    TRANSFERRED: {
+      label: "Transferred to tutor",
+      className: "bg-blue-50 text-blue-700",
+    },
+    FAILED: {
+      label: "Transfer failed",
+      className: "bg-rose-50 text-rose-700",
+    },
+  };
+
 export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +143,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       (booking as Booking & { _id?: string })._id,
       (booking as Booking & { bookingId?: string }).bookingId,
     );
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     if (!userId) return;
 
     setLoading(true);
@@ -135,16 +151,16 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       const data = await getBookings(userRole, userId);
 
       setBookings(data || []);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load bookings");
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, userRole]);
 
   useEffect(() => {
     fetchBookings();
-  }, [userRole, userId]);
+  }, [fetchBookings]);
 
   useEffect(() => {
     const handleBookingUpdated = () => {
@@ -156,7 +172,7 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
     return () => {
       window.removeEventListener("booking:updated", handleBookingUpdated);
     };
-  }, [userRole, userId]);
+  }, [fetchBookings]);
 
   const updateBookingStatus = async (
     bookingId: string,
@@ -178,53 +194,10 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       toast.error("Update failed");
     }
   };
-  type ReviewPayload = {
-    bookingId: string;
-    rating: number;
-    comment: string;
-    bookingStatus: Booking["status"]; // pass status from UI
-  };
-
-  const submitReview = async ({
-    bookingId,
-    rating,
-    comment,
-    bookingStatus,
-  }: ReviewPayload) => {
-    // 🔒 Prevent review unless completed
-    if (bookingStatus !== "COMPLETED") {
-      toast.error("You can only review after the session is completed");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/reviews`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId,
-          rating,
-          comment,
-        }),
-      });
-
-      if (!res.ok) throw new Error();
-
-      toast.success("Review submitted successfully ⭐");
-
-      // Optional: mark booking as reviewed
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, isReviewed: true } : b)),
-      );
-    } catch (err) {
-      toast.error("Failed to submit review");
-    }
-  };
   const deleteBooking = async (bookingId: string) => {
     if (!confirm("Delete this booking?")) return;
     try {
-      const response = await deleteBookingService(bookingId);
+      await deleteBookingService(bookingId);
       setBookings((prev) => prev.filter((b) => b.id !== bookingId));
       toast.success("Deleted");
     } catch {
@@ -245,9 +218,6 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       setDownloadingInvoiceBookingId(null);
     }
   };
-
-  const formatDateTime = (dateStr: string) =>
-    format(new Date(dateStr), "EEEE, MMM d • h:mm a");
 
   const getDuration = (start: string, end: string) => {
     const duration = intervalToDuration({
@@ -315,9 +285,9 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
       {userRole === Roles.tutor && (
         <Card className="rounded-2xl border-dashed bg-muted/20">
           <CardContent className="py-4 text-sm text-muted-foreground">
-            Confirm sessions after payment is marked paid. Confirming allows
-            payout routing to your connected Stripe account, and cancellations
-            trigger automatic refund handling.
+            Confirm sessions after payment is marked paid. Payment can remain
+            platform-held when payout setup is incomplete, and transfer may be
+            processed later.
           </CardContent>
         </Card>
       )}
@@ -351,9 +321,6 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
         {filteredBookings.map((booking, i) => {
           const otherParty = getOtherParty(booking);
           const status = statusConfig[booking.status];
-          const isPast =
-            booking.slot && new Date(booking.slot.endTime) < new Date();
-
           return (
             <motion.div
               key={booking.id}
@@ -437,6 +404,22 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                           `Payment ${booking.paymentStatus.toLowerCase()}`}
                       </Badge>
                     )}
+                    {(booking.payoutStatus ||
+                      booking.paymentStatus === "PAID") && (
+                      <Badge
+                        variant="secondary"
+                        className={`rounded-full px-3 py-1 text-xs font-medium border-0 ${
+                          payoutStatusConfig[booking.payoutStatus || "PENDING"]
+                            ?.className || "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {payoutStatusConfig[booking.payoutStatus || "PENDING"]
+                          ?.label ||
+                          `Payout ${String(
+                            booking.payoutStatus || "PENDING",
+                          ).toLowerCase()}`}
+                      </Badge>
+                    )}
                     <Badge
                       className={`${status.bg} ${status.color} border-0 rounded-full px-3 py-1 text-xs font-medium`}
                     >
@@ -464,6 +447,16 @@ export const MyBookings = ({ userRole, userId }: MyBookingsProps) => {
                     <CardContent className="pt-0 pb-2">
                       <p className="text-xs text-rose-600">
                         Refund processed for this booking.
+                      </p>
+                    </CardContent>
+                  )}
+
+                {(booking.paymentStatus === "PAID" ||
+                  booking.payoutStatus === "PENDING") &&
+                  booking.status !== "CANCELLED" && (
+                    <CardContent className="pt-0 pb-2">
+                      <p className="text-xs text-amber-700">
+                        Payment received. Transfer to tutor is pending.
                       </p>
                     </CardContent>
                   )}

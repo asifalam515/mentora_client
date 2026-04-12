@@ -56,6 +56,29 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+type DemoRole = "admin" | "student" | "tutor";
+
+const demoCredentials: Record<
+  DemoRole,
+  { label: string; email: string; password: string }
+> = {
+  admin: {
+    label: "Login as Admin",
+    email: "asibul@gmail.com",
+    password: "password1234",
+  },
+  student: {
+    label: "Login as Student",
+    email: "urmi@gmail.com",
+    password: "urmi@gmail.com",
+  },
+  tutor: {
+    label: "Login as Tutor",
+    email: "rafi@gmail.com",
+    password: "password1234",
+  },
+};
+
 const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -118,6 +141,29 @@ const LoginForm = () => {
 
   const handleForgotPassword = () => {
     router.push("/forgot-password");
+  };
+
+  const handleFillDemoCredentials = (role: DemoRole) => {
+    const credentials = demoCredentials[role];
+
+    if (!credentials.email || !credentials.password) {
+      toast.error(
+        `Missing ${role} demo credentials. Add email/password in LoginForm.tsx.`,
+      );
+      return;
+    }
+
+    form.setValue("email", credentials.email, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    form.setValue("password", credentials.password, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    toast.success(`${credentials.label} credentials filled`);
   };
 
   const stats = [
@@ -344,6 +390,32 @@ const LoginForm = () => {
                       </FormItem>
                     )}
                   />
+
+                  {/* Demo Credentials */}
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium">Demo Credentials</p>
+                      <p className="text-xs text-muted-foreground">
+                        For recruiter quick login
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {(Object.keys(demoCredentials) as DemoRole[]).map(
+                        (role) => (
+                          <Button
+                            key={role}
+                            type="button"
+                            variant="outline"
+                            className="h-10"
+                            onClick={() => handleFillDemoCredentials(role)}
+                            disabled={isSubmitting}
+                          >
+                            {demoCredentials[role].label}
+                          </Button>
+                        ),
+                      )}
+                    </div>
+                  </div>
 
                   {/* Login Button */}
                   <Button

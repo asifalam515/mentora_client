@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Search,
   Shield,
+  Sparkles,
   User,
   Users,
   X,
@@ -70,6 +71,11 @@ const Navbar = () => {
       href: "/tutors",
       label: "Browse Tutors",
       icon: <Search className="h-4 w-4" />,
+    },
+    {
+      href: "/smart-match",
+      label: "Smart Match",
+      icon: <Sparkles className="h-4 w-4" />,
     },
   ];
 

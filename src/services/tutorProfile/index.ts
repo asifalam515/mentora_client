@@ -1,31 +1,19 @@
-"use server";
-import { cookies } from "next/headers";
+"use client";
 
-export const createTutorProfile = async (payload: any) => {
+import { apiJson } from "@/lib/api-client";
+
+export const createTutorProfile = async (payload: Record<string, unknown>) => {
   try {
-    const store = await cookies();
-    const token = store.get("token")?.value;
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
+    return await apiJson<unknown>("/tutor-profiles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data?.message || "Failed to create tutor profile");
-    }
-
-    return data;
-  } catch (error: any) {
-    throw new Error(error.message || "Something went wrong");
+      body: JSON.stringify(payload),
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Something went wrong";
+    throw new Error(message);
   }
 };

@@ -1,40 +1,30 @@
-"use server";
+"use client";
 
-import { cookies } from "next/headers";
+import { apiJson } from "@/lib/api-client";
 
 export const postReview = async ({
   bookingId,
   tutorId,
   rating,
   comment,
-}: any) => {
-  const store = await cookies();
-  const token = store.get("token")?.value;
-
-  if (!token) {
-    console.error("No token found");
-    throw new Error("Authentication required");
-  }
-
+}: {
+  bookingId: string;
+  tutorId: string;
+  rating: number;
+  comment: string;
+}) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/reviews`, {
+    return await apiJson<unknown>("/reviews", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ include token
       },
       body: JSON.stringify({ bookingId, tutorId, rating, comment }),
     });
-
-    const result = await res.json();
-
-    if (!res.ok) {
-      throw new Error(result?.error || "Failed to post review");
-    }
-
-    return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Something went wrong";
     console.error("Error posting review:", error);
-    throw new Error(error.message || "Something went wrong");
+    throw new Error(message);
   }
 };

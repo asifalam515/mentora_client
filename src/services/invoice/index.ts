@@ -1,37 +1,24 @@
 "use client";
 
+import { apiJson, apiRequest } from "@/lib/api-client";
 import { StudentInvoice } from "@/types/invoice/types";
 
-const parseApiError = async (response: Response, fallback: string) => {
-  try {
-    const payload = await response.json();
-    return payload?.message || payload?.error || fallback;
-  } catch {
-    return fallback;
-  }
-};
-
 export const getMyInvoices = async () => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/invoices/my`,
-    {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const payload = await apiJson<unknown>("/invoices/my", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+  });
 
-  if (!response.ok) {
-    const message = await parseApiError(response, "Failed to load invoices");
-    throw new Error(message);
-  }
+  const payloadObject =
+    payload && typeof payload === "object"
+      ? (payload as { data?: StudentInvoice[] })
+      : null;
 
-  const payload = await response.json();
   const invoices: StudentInvoice[] = Array.isArray(payload)
     ? payload
-    : payload?.data || [];
+    : payloadObject?.data || [];
 
   return invoices;
 };
@@ -40,17 +27,12 @@ export const downloadInvoicePdf = async (
   bookingId: string,
   invoiceNumber?: string,
 ) => {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/invoices/booking/${bookingId}/pdf`,
-    {
-      method: "GET",
-      credentials: "include",
-    },
-  );
+  const response = await apiRequest(`/invoices/booking/${bookingId}/pdf`, {
+    method: "GET",
+  });
 
   if (!response.ok) {
-    const message = await parseApiError(response, "Failed to download invoice");
-    throw new Error(message);
+    throw new Error("Failed to download invoice");
   }
 
   const blob = await response.blob();

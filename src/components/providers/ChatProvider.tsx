@@ -28,6 +28,8 @@ interface ChatReadReceiptPayload {
 interface ChatSocketContextValue {
   socket: Socket | null;
   connected: boolean;
+  mode: "realtime" | "fallback";
+  statusText: string;
   joinConversation: (conversationId: string) => void;
   startTyping: (conversationId: string) => void;
   stopTyping: (conversationId: string) => void;
@@ -50,15 +52,17 @@ interface ChatSocketContextValue {
 
 const ChatSocketContext = createContext<ChatSocketContextValue | null>(null);
 
-const getSocketBaseUrl = () => {
-  const apiBase = process.env.NEXT_PUBLIC_BASE_URL || "";
-  return apiBase.replace(/\/api\/v1\/?$/, "");
-};
+const getSocketUrl = () =>
+  (process.env.NEXT_PUBLIC_SOCKET_URL || "").trim().replace(/\/$/, "");
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
   const [connected, setConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [mode, setMode] = useState<"realtime" | "fallback">("fallback");
+  const [statusText, setStatusText] = useState(
+    "Realtime unavailable, using refresh mode",
+  );
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -68,29 +72,61 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const socket = io(getSocketBaseUrl(), {
+    const socketUrl = getSocketUrl();
+
+    if (!socketUrl) {
+      return;
+    }
+
+    const socket = io(socketUrl, {
       withCredentials: true,
       transports: ["websocket"],
       autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 2,
+      reconnectionDelay: 1200,
+      timeout: 5000,
     });
 
     socketRef.current = socket;
     queueMicrotask(() => setSocket(socket));
 
-    const handleConnect = () => setConnected(true);
-    const handleDisconnect = () => setConnected(false);
+    const handleConnect = () => {
+      setConnected(true);
+      setMode("realtime");
+      setStatusText("Realtime connected");
+    };
+    const handleDisconnect = () => {
+      setConnected(false);
+      setMode("fallback");
+      setStatusText("Realtime unavailable, using refresh mode");
+    };
+
+    const handleConnectError = (error: Error) => {
+      console.warn("[chat] socket connect failed, falling back to REST", {
+        message: error.message,
+      });
+      setConnected(false);
+      setMode("fallback");
+      setStatusText("Realtime unavailable, using refresh mode");
+      socket.disconnect();
+    };
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
     socket.connect();
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
       socket.disconnect();
       socketRef.current = null;
       setSocket(null);
       setConnected(false);
+      setMode("fallback");
+      setStatusText("Realtime unavailable, using refresh mode");
     };
   }, [user]);
 
@@ -98,6 +134,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     () => ({
       socket,
       connected,
+      mode,
+      statusText,
       joinConversation: (conversationId) => {
         socketRef.current?.emit("chat:join", { conversationId });
       },
@@ -130,7 +168,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         return () => socketRef.current?.off("chat:error", handler);
       },
     }),
-    [socket, connected],
+    [socket, connected, mode, statusText],
   );
 
   return (
