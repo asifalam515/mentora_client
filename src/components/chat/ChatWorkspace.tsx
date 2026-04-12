@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { isValidChatBookingId, resolveChatBookingId } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import {
@@ -536,7 +537,9 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
                     <p className="text-sm text-muted-foreground">
                       {currentConversationBooking
                         ? `Booking on ${format(new Date(currentConversationBooking.date), "EEE, MMM d")}`
-                        : "Loading booking details..."}
+                        : loading
+                          ? "Loading booking details..."
+                          : "Booking details unavailable"}
                     </p>
                   </div>
                 </div>
@@ -554,9 +557,23 @@ export default function ChatWorkspace({ bookingId }: ChatWorkspaceProps) {
 
             <div className="flex-1 min-h-0">
               {loadingMessages ? (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading messages...
+                <div className="space-y-3 px-4 py-5 sm:px-6">
+                  {[1, 2, 3, 4].map((row) => (
+                    <div
+                      key={row}
+                      className={cn(
+                        "flex",
+                        row % 2 === 0 ? "justify-end" : "justify-start",
+                      )}
+                    >
+                      <Skeleton
+                        className={cn(
+                          "h-14 rounded-3xl",
+                          row % 2 === 0 ? "w-56" : "w-64",
+                        )}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <ScrollArea

@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -124,9 +125,11 @@ export default function StudentInvoicesList({
 
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-10 text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading invoices...
+          <div className="space-y-3 py-2">
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
           </div>
         ) : displayedInvoices.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">

@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { isPastAvailabilitySlot } from "@/lib/booking";
 import { getStripePromise, hasStripePublishableKey } from "@/lib/stripe";
 
 interface SlotSummary {
@@ -105,6 +106,7 @@ function CheckoutForm({
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [needsFinalizeRetry, setNeedsFinalizeRetry] = useState(false);
+  const slotIsPast = isPastAvailabilitySlot(slot);
 
   const verifyBookingRecovery = async (paymentIntentId: string) => {
     try {
@@ -132,6 +134,14 @@ function CheckoutForm({
   };
 
   const finalizeBooking = async () => {
+    if (slotIsPast) {
+      const expiredMessage =
+        "This slot has already passed and cannot be booked.";
+      setPaymentError(expiredMessage);
+      toast.error(expiredMessage);
+      return;
+    }
+
     setFinalizing(true);
     setPaymentError(null);
 
@@ -199,6 +209,14 @@ function CheckoutForm({
   const handlePayAndBook = async () => {
     if (!stripe || !elements) {
       setPaymentError("Payment form is still loading. Please wait a moment.");
+      return;
+    }
+
+    if (slotIsPast) {
+      const expiredMessage =
+        "This slot has already passed and cannot be booked.";
+      setPaymentError(expiredMessage);
+      toast.error(expiredMessage);
       return;
     }
 
@@ -295,7 +313,12 @@ function CheckoutForm({
       <Button
         onClick={handlePayAndBook}
         disabled={
-          confirming || finalizing || needsFinalizeRetry || !stripe || !elements
+          confirming ||
+          finalizing ||
+          needsFinalizeRetry ||
+          !stripe ||
+          !elements ||
+          slotIsPast
         }
         className="w-full gap-2"
       >
@@ -315,7 +338,7 @@ function CheckoutForm({
         <Button
           variant="outline"
           onClick={finalizeBooking}
-          disabled={finalizing}
+          disabled={finalizing || slotIsPast}
           className="w-full"
         >
           {finalizing ? "Retrying finalization..." : "Retry finalize booking"}
@@ -342,6 +365,7 @@ export default function PaymentFirstBookingDialog({
 
   const estimatedHours = slot ? getHours(slot.startTime, slot.endTime) : 0;
   const estimatedTotal = tutorHourlyRate ? estimatedHours * tutorHourlyRate : 0;
+  const isPastSlot = slot ? isPastAvailabilitySlot(slot) : false;
 
   const resetState = () => {
     setLoadingIntent(false);
@@ -352,6 +376,12 @@ export default function PaymentFirstBookingDialog({
   useEffect(() => {
     if (!open || !slot) {
       resetState();
+      return;
+    }
+
+    if (isPastAvailabilitySlot(slot)) {
+      resetState();
+      setIntentError("This slot has already passed and cannot be booked.");
       return;
     }
 
@@ -414,7 +444,7 @@ export default function PaymentFirstBookingDialog({
           <DialogTitle>Secure Checkout</DialogTitle>
           <DialogDescription>
             Review your session details, complete payment, and then your booking
-            will be finalized.
+            will be finalized. Old slots cannot be booked.
           </DialogDescription>
         </DialogHeader>
 
@@ -425,7 +455,9 @@ export default function PaymentFirstBookingDialog({
                 {format(new Date(slot.startTime), "EEE, MMM d • h:mm a")} -{" "}
                 {format(new Date(slot.endTime), "h:mm a")}
               </p>
-              <Badge variant="secondary">{estimatedHours}h</Badge>
+              <Badge variant="secondary">
+                {isPastSlot ? "Old slot" : `${estimatedHours}h`}
+              </Badge>
             </div>
 
             <Separator className="my-3" />
@@ -444,6 +476,11 @@ export default function PaymentFirstBookingDialog({
                 Estimate only. Final charge is calculated by backend from tutor
                 rate and slot duration.
               </p>
+              {isPastSlot && (
+                <p className="text-xs font-medium text-destructive">
+                  This session has already ended and cannot be booked.
+                </p>
+              )}
             </div>
 
             {paymentIntent && (

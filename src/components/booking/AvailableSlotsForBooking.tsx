@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTutorAvailability } from "@/lib/booking";
+import { getTutorAvailability, isPastAvailabilitySlot } from "@/lib/booking";
 import { useAuthStore } from "@/store/useAuthStore.ts";
 
 interface AvailabilitySlot {
@@ -50,13 +50,7 @@ const AvailableSlotsForBooking = ({
     try {
       const data = await getTutorAvailability(tutorId);
 
-      // Filter out past slots (end time already passed)
-      const now = new Date();
-      const futureSlots = data?.filter(
-        (slot: AvailabilitySlot) => new Date(slot.endTime) > now,
-      );
-
-      setSlots(futureSlots);
+      setSlots(data || []);
     } catch (error) {
       console.error("Fetch slots error:", error);
       toast.error("Could not load available slots");
@@ -79,6 +73,11 @@ const AvailableSlotsForBooking = ({
 
     const slot = slots.find((s) => s.id === slotId);
     if (!slot) return;
+
+    if (isPastAvailabilitySlot(slot)) {
+      toast.error("This slot has already passed");
+      return;
+    }
 
     // Double-check slot is not already booked (UI might be stale)
     if (slot.isBooked) {
@@ -112,7 +111,7 @@ const AvailableSlotsForBooking = ({
           Sessions with this Tutor
         </CardTitle>
         <CardDescription>
-          Available slots are highlighted; booked slots are marked.
+          Available slots are highlighted; booked and old slots are marked.
         </CardDescription>
       </CardHeader>
 
@@ -132,53 +131,64 @@ const AvailableSlotsForBooking = ({
           </div>
         ) : (
           <div className="grid gap-3">
-            {slots.map((slot) => {
-              const isPast = new Date(slot.endTime) <= new Date();
-              const isBooked = slot.isBooked || isPast; // treat past as booked
-              const isAvailable = !isBooked;
+            {slots
+              .slice()
+              .sort(
+                (left, right) =>
+                  new Date(left.startTime).getTime() -
+                  new Date(right.startTime).getTime(),
+              )
+              .map((slot) => {
+                const isPast = isPastAvailabilitySlot(slot);
+                const isBooked = slot.isBooked;
+                const isAvailable = !isBooked && !isPast;
 
-              return (
-                <div
-                  key={slot.id}
-                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border transition ${
-                    isAvailable
-                      ? "hover:shadow-md border-green-200 dark:border-green-800"
-                      : "border-muted bg-muted/20"
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium text-sm md:text-base">
-                      {formatSlotTime(slot.startTime, slot.endTime)}
-                    </p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>60 minutes • Online</span>
-                      {isBooked && (
-                        <Badge variant="secondary" className="text-xs">
-                          {isPast ? "Passed" : "Booked"}
-                        </Badge>
-                      )}
-                    </p>
-                  </div>
-
-                  <Button
-                    size="sm"
-                    onClick={() => handleBookSlot(slot.id)}
-                    disabled={isBooked}
-                    variant={isAvailable ? "default" : "outline"}
-                    className={`gap-2 ${
-                      isBooked ? "cursor-not-allowed opacity-60" : ""
+                return (
+                  <div
+                    key={slot.id}
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border transition ${
+                      isAvailable
+                        ? "hover:shadow-md border-green-200 dark:border-green-800"
+                        : "border-muted bg-muted/20"
                     }`}
                   >
-                    {isBooked ? (
-                      <XCircle className="h-4 w-4" />
-                    ) : (
-                      <Calendar className="h-4 w-4" />
-                    )}
-                    {isBooked ? (isPast ? "Passed" : "Booked") : "Pay and Book"}
-                  </Button>
-                </div>
-              );
-            })}
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm md:text-base">
+                        {formatSlotTime(slot.startTime, slot.endTime)}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span>60 minutes • Online</span>
+                        {!isAvailable && (
+                          <Badge variant="secondary" className="text-xs">
+                            {isPast ? "Old slot" : "Booked"}
+                          </Badge>
+                        )}
+                      </p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => handleBookSlot(slot.id)}
+                      disabled={!isAvailable}
+                      variant={isAvailable ? "default" : "outline"}
+                      className={`gap-2 ${
+                        !isAvailable ? "cursor-not-allowed opacity-60" : ""
+                      }`}
+                    >
+                      {!isAvailable ? (
+                        <XCircle className="h-4 w-4" />
+                      ) : (
+                        <Calendar className="h-4 w-4" />
+                      )}
+                      {isAvailable
+                        ? "Pay and Book"
+                        : isPast
+                          ? "Old slot"
+                          : "Booked"}
+                    </Button>
+                  </div>
+                );
+              })}
           </div>
         )}
       </CardContent>

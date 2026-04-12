@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { resolveChatBookingId } from "@/lib/chat";
 import { cn } from "@/lib/utils";
 import { ChatConversationSummary } from "@/types/chat/types";
@@ -45,7 +46,16 @@ export default function ConversationList({
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((index) => (
-          <div key={index} className="h-24 rounded-2xl border bg-muted/20" />
+          <div key={index} className="rounded-2xl border p-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-56" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     );

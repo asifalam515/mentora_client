@@ -11,8 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { Calendar, Clock, Loader2, User } from "lucide-react";
+import { Calendar, Clock, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -84,8 +85,11 @@ export function CreateBooking({
   if (fetchingSlot) {
     return (
       <Card className="w-full max-w-md mx-auto">
-        <CardContent className="p-6 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <CardContent className="space-y-4 p-6">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
         </CardContent>
       </Card>
     );
