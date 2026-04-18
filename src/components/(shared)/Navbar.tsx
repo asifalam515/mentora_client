@@ -119,6 +119,11 @@ const Navbar = () => {
       icon: <BarChart3 className="h-4 w-4" />,
     },
     {
+      href: "/dashboard?view=resume-builder",
+      label: "Resume Builder",
+      icon: <Sparkles className="h-4 w-4" />,
+    },
+    {
       href: "/availability-slot",
       label: "Availability",
       icon: <Clock className="h-4 w-4" />,

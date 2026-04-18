@@ -2,6 +2,7 @@
 
 import ChatWorkspace from "@/components/chat/ChatWorkspace";
 import ProfilePage from "@/components/profile/ProfilePage";
+import ResumeBuilderPage from "@/components/resume-builder/ResumeBuilderPage";
 import AvailabilityManager from "@/components/tutor/AvailabilityManager";
 import { DashboardWithCollapsibleSidebar } from "@/components/ui/dashboard-with-collapsible-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,7 @@ import {
   Home,
   MessageSquare,
   Settings,
+  Sparkles,
   User,
   Users,
   type LucideIcon,
@@ -41,7 +43,7 @@ export default function DashboardLayout({ admin, tutor, student }: Props) {
   const activeView = searchParams.get("view") || "home";
 
   const navItems = useMemo<DashboardNavItem[]>(() => {
-    return [
+    const base: DashboardNavItem[] = [
       {
         title: "Dashboard",
         href: "/dashboard?view=home",
@@ -64,7 +66,17 @@ export default function DashboardLayout({ admin, tutor, student }: Props) {
         icon: BookOpen,
       },
     ];
-  }, []);
+
+    if (role === "TUTOR") {
+      base.push({
+        title: "Resume Builder",
+        href: "/dashboard?view=resume-builder",
+        icon: Sparkles,
+      });
+    }
+
+    return base;
+  }, [role]);
 
   const accountItems = useMemo<DashboardNavItem[]>(() => {
     const base: DashboardNavItem[] = [
@@ -157,6 +169,21 @@ export default function DashboardLayout({ admin, tutor, student }: Props) {
           <h2 className="text-xl font-semibold">Availability</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Availability management is available for tutors.
+          </p>
+        </div>
+      );
+    }
+
+    if (activeView === "resume-builder") {
+      if (role === "TUTOR") {
+        return <ResumeBuilderPage />;
+      }
+
+      return (
+        <div className="rounded-2xl border bg-background/80 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold">Resume Builder</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Resume Builder is available for tutors.
           </p>
         </div>
       );
