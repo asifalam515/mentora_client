@@ -4,63 +4,116 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { apiJson } from "@/lib/api-client";
 import {
   Award,
   BookOpen,
-  Brain,
   Calculator,
   CheckCircle,
   ChevronRight,
   Clock,
-  Code,
-  Globe,
   GraduationCap,
-  Music,
   Play,
   Shield,
   Star,
-  Target,
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface TutorCategoryAssignment {
+  tutorId: string;
+  categoryId: string;
+  category?: {
+    id: string;
+    name: string;
+  };
+}
+
+interface TopTutor {
+  name: string;
+  subject: string;
+  rating: number;
+  students: number;
+  avatar?: string;
+}
+
+const SUBJECT_DOT_COLORS = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-amber-500",
+  "bg-red-500",
+  "bg-cyan-500",
+  "bg-rose-500",
+];
 
 const HeroSection = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchQuery = "";
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [popularCategories, setPopularCategories] = useState<string[]>([]);
+  const [topTutors, setTopTutors] = useState<TopTutor[]>([]);
 
-  const popularSubjects = [
-    {
-      name: "Mathematics",
-      icon: <Calculator className="h-5 w-5" />,
-      color: "bg-blue-500",
-    },
-    {
-      name: "Programming",
-      icon: <Code className="h-5 w-5" />,
-      color: "bg-green-500",
-    },
-    {
-      name: "Science",
-      icon: <Brain className="h-5 w-5" />,
-      color: "bg-purple-500",
-    },
-    {
-      name: "Languages",
-      icon: <Globe className="h-5 w-5" />,
-      color: "bg-amber-500",
-    },
-    {
-      name: "Music",
-      icon: <Music className="h-5 w-5" />,
-      color: "bg-pink-500",
-    },
-    {
-      name: "Test Prep",
-      icon: <Target className="h-5 w-5" />,
-      color: "bg-red-500",
-    },
-  ];
+  useEffect(() => {
+    const fetchPopularCategories = async () => {
+      try {
+        const response = await apiJson<
+          TutorCategoryAssignment[] | { data?: TutorCategoryAssignment[] }
+        >("/tutor-categories", { skipAuthRedirect: true });
+
+        const assignments = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+        const categoryCount = new Map<string, number>();
+
+        assignments.forEach((item) => {
+          const categoryName = item?.category?.name?.trim();
+          if (!categoryName) return;
+
+          const currentCount = categoryCount.get(categoryName) ?? 0;
+          categoryCount.set(categoryName, currentCount + 1);
+        });
+
+        const topCategoryNames = [...categoryCount.entries()]
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .slice(0, 6)
+          .map(([name]) => name);
+
+        setPopularCategories(topCategoryNames);
+      } catch (error) {
+        console.error("Failed to load tutor categories", error);
+        setPopularCategories([]);
+      }
+    };
+
+    fetchPopularCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchTopTutors = async () => {
+      try {
+        const response = await apiJson<TopTutor[] | { data?: TopTutor[] }>(
+          "/tutor-profiles/top-tutors",
+          { skipAuthRedirect: true },
+        );
+
+        const tutors = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+
+        setTopTutors(tutors);
+      } catch (error) {
+        console.error("Failed to load top tutors", error);
+        setTopTutors([]);
+      }
+    };
+
+    fetchTopTutors();
+  }, []);
 
   const stats = [
     {
@@ -88,32 +141,6 @@ const HeroSection = () => {
     "100% satisfaction guarantee",
     "Interactive whiteboard",
     "Progress tracking",
-  ];
-
-  const topTutors = [
-    {
-      name: "Dr. Sarah Chen",
-      subject: "Mathematics",
-      rating: 4.9,
-      students: 250,
-      avatar:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrKNa_1guK9qVnTWBnX7IBvjXJeXGuD8vDNw&s",
-    },
-    {
-      name: "Prof. James Wilson",
-      subject: "Physics",
-      rating: 4.8,
-      students: 180,
-      avatar:
-        "https://i.ibb.co.com/PpR00GD/Whats-App-Image-2026-02-08-at-2-01-16-PM.jpg",
-    },
-    {
-      name: "Ms. Elena Rodriguez",
-      subject: "Spanish",
-      rating: 5.0,
-      students: 120,
-      avatar: "https://i.ibb.co.com/hRfgcd8/profile.png",
-    },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -184,23 +211,23 @@ const HeroSection = () => {
                       Popular subjects:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {popularSubjects.map((subject) => (
+                      {popularCategories.map((subject, index) => (
                         <Button
-                          key={subject.name}
+                          key={subject}
                           type="button"
                           variant="outline"
                           size="sm"
                           className={`rounded-full gap-2 ${
-                            selectedSubject === subject.name
+                            selectedSubject === subject
                               ? "border-primary bg-primary/10"
                               : ""
                           }`}
-                          onClick={() => setSelectedSubject(subject.name)}
+                          onClick={() => setSelectedSubject(subject)}
                         >
                           <span
-                            className={subject.color + " h-2 w-2 rounded-full"}
+                            className={`${SUBJECT_DOT_COLORS[index % SUBJECT_DOT_COLORS.length]} h-2 w-2 rounded-full`}
                           />
-                          {subject.name}
+                          {subject}
                         </Button>
                       ))}
                     </div>
@@ -398,7 +425,7 @@ const HeroSection = () => {
                       <div className="space-y-3">
                         {topTutors.map((tutor, index) => (
                           <div
-                            key={index}
+                            key={`${tutor.name}-${index}`}
                             className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
                           >
                             <div className="flex items-center gap-3">

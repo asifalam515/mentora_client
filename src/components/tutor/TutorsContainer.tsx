@@ -27,7 +27,7 @@ const TutorsContainer = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 10,
+    limit: 9,
     total: 0,
     totalPages: 0,
     hasNextPage: false,
