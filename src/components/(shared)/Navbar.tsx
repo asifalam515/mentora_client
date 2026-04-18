@@ -100,6 +100,16 @@ const Navbar = () => {
       label: "Invoices",
       icon: <FileText className="h-4 w-4" />,
     },
+    {
+      href: "/generate-curriculum",
+      label: "AI Curriculum",
+      icon: <Sparkles className="h-4 w-4" />,
+    },
+    {
+      href: "/lesson-plans",
+      label: "My Lesson Plans",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
   ];
 
   const tutorNavItems = [
