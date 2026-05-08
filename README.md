@@ -10,7 +10,7 @@ Environment SetupCreate a .env file and add your DATABASE_URL and JWT_SECRET.Lau
 
 ## 🚀 Project Overview
 
-**SkillBridge** is a full-stack tutoring marketplace that connects learners with expert tutors.
+**Mentora** is a full-stack tutoring marketplace that connects learners with expert tutors.
 Students can discover tutors, book sessions, and leave reviews, while tutors can manage their availability and track teaching sessions. Admins manage the platform, users, and categories.
 
 This project demonstrates a **role-based SaaS architecture** with real-world features like authentication, booking systems, and dashboards.

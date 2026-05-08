@@ -5,8 +5,10 @@ import { tutorService } from "@/services/tutor.service";
 import { useEffect, useState } from "react";
 import TutorsList, { Filters } from "./TutorsList";
 
+const DEFAULT_TUTOR_PAGE_LIMIT = 9;
+
 const TutorsContainer = () => {
-  const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoriesMap, setCategoriesMap] = useState<Map<string, string>>(
     new Map(),
@@ -27,7 +29,7 @@ const TutorsContainer = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 9,
+    limit: DEFAULT_TUTOR_PAGE_LIMIT,
     total: 0,
     totalPages: 0,
     hasNextPage: false,
@@ -66,7 +68,7 @@ const TutorsContainer = () => {
         maxPrice: filters.maxPrice,
         minRating: filters.minRating,
         page,
-        limit: 10, // or whatever limit you use
+        limit: DEFAULT_TUTOR_PAGE_LIMIT,
       };
 
       if (categoryIds.length > 0) {

@@ -152,7 +152,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background via-primary/5 to-background">
+    <section className="relative overflow-hidden bg-linear-to-b from-background via-primary/5 to-background">
       {/* Background Decorative Elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
@@ -160,45 +160,45 @@ const HeroSection = () => {
         <div className="absolute top-1/3 left-1/4 h-40 w-40 rounded-full bg-blue-500/10 blur-2xl" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 py-16 md:py-24 lg:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="container relative z-10 mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
           {/* Left Content */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
               <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
+              <span className="text-xs font-medium text-primary sm:text-sm">
                 Trusted by 10,000+ learners worldwide
               </span>
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
               <span className="block">Unlock Your</span>
               <span className="block text-primary">Learning Potential</span>
               <span className="block">with Expert Tutors</span>
             </h1>
 
             {/* Description */}
-            <p className="text-xl text-muted-foreground md:w-5/6">
+            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:w-5/6 lg:text-xl">
               Connect 1-on-1 with verified expert tutors across 50+ subjects.
               Flexible scheduling, personalized sessions, and guaranteed
               progress.
             </p>
 
             {/* Features List */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {features.map((feature, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="text-sm">{feature}</span>
+                  <CheckCircle className="h-4 w-4 flex-none text-green-500 sm:h-5 sm:w-5" />
+                  <span className="text-sm leading-snug">{feature}</span>
                 </div>
               ))}
             </div>
 
             {/* Search Bar */}
             <Card className="border-primary/20 shadow-lg">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <form onSubmit={handleSearch} className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-3">
                     Find Tutors
@@ -237,14 +237,19 @@ const HeroSection = () => {
             </Card>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="h-12 px-8" asChild>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Button size="lg" className="h-12 w-full px-8 sm:w-auto" asChild>
                 <Link href="/register">
                   Start Learning Free
                   <BookOpen className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8" asChild>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 w-full px-8 sm:w-auto"
+                asChild
+              >
                 <Link href="/become-tutor">
                   Become a Tutor
                   <Award className="ml-2 h-5 w-5" />
@@ -253,12 +258,16 @@ const HeroSection = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
+            <div className="grid grid-cols-2 gap-4 pt-4 sm:gap-6 md:grid-cols-4">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    {stat.icon}
-                    <div className="text-2xl font-bold">{stat.number}</div>
+                    <div className="flex h-5 w-5 items-center justify-center text-primary sm:h-auto sm:w-auto">
+                      {stat.icon}
+                    </div>
+                    <div className="text-xl font-bold sm:text-2xl">
+                      {stat.number}
+                    </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {stat.label}
@@ -269,17 +278,17 @@ const HeroSection = () => {
           </div>
 
           {/* Right Content */}
-          <div className="relative">
+          <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
             {/* Main Illustration Card */}
             <Card className="relative overflow-hidden border-primary/20 shadow-2xl">
               <CardContent className="p-0">
                 <div
                   className="
   relative overflow-hidden rounded-xl border
-  bg-gradient-to-br
+  bg-linear-to-br
   from-primary/10 via-primary/5 to-transparent
   dark:from-primary/20 dark:via-primary/10 dark:to-transparent
-  p-6
+  p-4 sm:p-5 lg:p-6
 "
                 >
                   {/* Subtle background decoration */}
@@ -288,29 +297,29 @@ const HeroSection = () => {
                     <div className="absolute -bottom-16 -left-16 h-32 w-32 rounded-full bg-primary/20 blur-2xl" />
                   </div>
 
-                  <div className="relative z-10 flex flex-col gap-5">
+                  <div className="relative z-10 flex flex-col gap-4 sm:gap-5">
                     {/* Top Section */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         {/* Play Button */}
                         <div className="relative">
                           <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
                           <div
                             className="
-              relative flex h-12 w-12 items-center justify-center rounded-full
+              relative flex h-10 w-10 items-center justify-center rounded-full sm:h-12 sm:w-12
               bg-primary text-primary-foreground
               shadow-md transition-transform
               hover:scale-105
             "
                           >
-                            <Play className="h-6 w-6 fill-current" />
+                            <Play className="h-5 w-5 fill-current sm:h-6 sm:w-6" />
                           </div>
                         </div>
 
                         {/* Content */}
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold text-foreground">
+                            <h3 className="text-base font-semibold text-foreground sm:text-lg">
                               Live Session Demo
                             </h3>
                             <Badge
@@ -327,7 +336,7 @@ const HeroSection = () => {
                             </Badge>
                           </div>
 
-                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <p className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Experience interactive learning
                           </p>
@@ -339,6 +348,7 @@ const HeroSection = () => {
                         variant="outline"
                         size="sm"
                         className="
+            w-full sm:w-auto
           border-primary/30
           text-primary
           hover:bg-primary/10
@@ -367,40 +377,42 @@ const HeroSection = () => {
                 </div>
 
                 {/* Tutor Card */}
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16 border-2 border-primary">
+                <div className="p-4 sm:p-6">
+                  <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <Avatar className="h-14 w-14 border-2 border-primary sm:h-16 sm:w-16">
                         <AvatarImage
                           src="https://i.ibb.co.com/wW0P4Kk/profile.jpg"
                           alt="Tutor"
                         />
                         <AvatarFallback className="bg-primary/10">
-                          <GraduationCap className="h-8 w-8 text-primary" />
+                          <GraduationCap className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-lg font-bold">Dr. Sarah Chen</h3>
-                        <p className="text-muted-foreground">
+                        <h3 className="text-base font-bold sm:text-lg">
+                          Dr. Sarah Chen
+                        </h3>
+                        <p className="text-sm text-muted-foreground sm:text-base">
                           Mathematics Expert
                         </p>
                         <div className="flex items-center gap-1 mt-1">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-semibold">4.9</span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground sm:text-sm">
                             (250+ students)
                           </span>
                         </div>
                       </div>
                     </div>
-                    <Badge className="bg-green-500 hover:bg-green-600">
+                    <Badge className="self-start bg-green-500 hover:bg-green-600 sm:self-auto">
                       Online Now
                     </Badge>
                   </div>
 
                   {/* Session Preview */}
                   <div className="space-y-4">
-                    <div className="rounded-lg bg-muted p-4">
+                    <div className="rounded-lg bg-muted p-3 sm:p-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium">
                           Interactive Whiteboard
@@ -426,10 +438,10 @@ const HeroSection = () => {
                         {topTutors.map((tutor, index) => (
                           <div
                             key={`${tutor.name}-${index}`}
-                            className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
+                            className="flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                           >
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Avatar className="h-9 w-9 flex-none sm:h-10 sm:w-10">
                                 <AvatarImage
                                   src={tutor.avatar}
                                   alt={tutor.name}
@@ -441,14 +453,16 @@ const HeroSection = () => {
                                     .join("")}
                                 </AvatarFallback>
                               </Avatar>
-                              <div>
-                                <p className="font-medium">{tutor.name}</p>
-                                <p className="text-xs text-muted-foreground">
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">
+                                  {tutor.name}
+                                </p>
+                                <p className="truncate text-xs text-muted-foreground">
                                   {tutor.subject}
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
+                            <div className="flex-none text-right">
                               <div className="flex items-center gap-1">
                                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                 <span className="font-medium">
@@ -466,9 +480,13 @@ const HeroSection = () => {
 
                     {/* Available Times */}
                     <div className="pt-4 border-t">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="mb-3 flex items-center justify-between gap-3">
                         <h4 className="font-semibold">Available Today</h4>
-                        <Button variant="ghost" size="sm" className="h-8">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 flex-none px-2"
+                        >
                           View All
                           <ChevronRight className="ml-1 h-3 w-3" />
                         </Button>
@@ -498,9 +516,9 @@ const HeroSection = () => {
             </Card>
 
             {/* Floating Elements */}
-            <div className="absolute -bottom-6 -left-6">
+            <div className="absolute -bottom-4 -left-4 hidden md:block lg:-bottom-6 lg:-left-6">
               <Card className="border-primary/20 shadow-lg">
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                       <CheckCircle className="h-5 w-5 text-green-600" />
@@ -516,9 +534,9 @@ const HeroSection = () => {
               </Card>
             </div>
 
-            <div className="absolute -top-6 -right-6">
+            <div className="absolute -top-4 -right-4 hidden md:block lg:-top-6 lg:-right-6">
               <Card className="border-primary/20 shadow-lg">
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <Clock className="h-5 w-5 text-blue-600" />
