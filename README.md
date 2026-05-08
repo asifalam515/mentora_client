@@ -8,6 +8,87 @@ Environment SetupCreate a .env file and add your DATABASE_URL and JWT_SECRET.Lau
 
 ---
 
+## Why Choosing Us
+
+The homepage now includes a reusable `WhyChoosingUs` section that can render from API data or local mock data.
+
+### Usage
+
+```tsx
+<WhyChoosingUs
+  testimonials={testimonials}
+  metrics={metrics}
+  variant="expanded"
+  autoRotate
+  onCtaClick={() => console.log("CTA clicked")}
+/>
+```
+
+### API contract
+
+`GET /api/testimonials`
+
+```json
+{
+  "testimonials": [
+    {
+      "id": "string",
+      "name": "string",
+      "role": "string",
+      "avatarUrl": "string|null",
+      "rating": 5,
+      "quote": "string",
+      "verified": true
+    }
+  ],
+  "metrics": [
+    {
+      "id": "string",
+      "label": "string",
+      "value": "string",
+      "icon": "string"
+    }
+  ]
+}
+```
+
+### Notes
+
+- The component falls back to local mock data if the API request fails.
+- All visible copy can be overridden through the `strings` prop for i18n.
+- Unit tests live in `src/components/home/__tests__/WhyChoosingUs.test.tsx` and the E2E demo page is `/why-choosing-us-demo`.
+
+## Statistics Impact
+
+`StatisticsImpact` is the reusable analytics block used inside `WhyChoosingUs`. It fetches real global platform metrics from the backend and degrades gracefully when data is loading, empty, or unavailable.
+
+### Usage
+
+```tsx
+<StatisticsImpact variant="featured" />
+```
+
+### API contract
+
+`GET /api/v1/analytics`
+
+```json
+{
+  "analytics": {
+    "activeTutors": 1200,
+    "sessionsBooked": 56780,
+    "avgRating": 4.9,
+    "totalReviews": 8420
+  }
+}
+```
+
+### Notes
+
+- The component uses `/api/v1/analytics` as its client-side data source.
+- Pass `fallback` to keep the card populated when the live request fails.
+- The demo page is `/statistics-impact-demo`.
+
 ## 🚀 Project Overview
 
 **Mentora** is a full-stack tutoring marketplace that connects learners with expert tutors.
