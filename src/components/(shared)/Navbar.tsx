@@ -51,6 +51,10 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     try {
       await unregisterNotificationDeviceToken();
@@ -301,6 +305,109 @@ const Navbar = () => {
             {isMobileMenuOpen ? <X /> : <Menu />}
           </Button>
         </div>
+
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 shadow-lg">
+            <div className="container mx-auto px-4 py-4 space-y-4">
+              <div className="grid gap-2">
+                {publicNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button
+                      variant={isActive(item.href) ? "default" : "ghost"}
+                      className="w-full justify-start gap-2"
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Button>
+                  </Link>
+                ))}
+
+                {roleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button
+                      variant={isActive(item.href) ? "default" : "ghost"}
+                      className="w-full justify-start gap-2"
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-2">
+                {user ? (
+                  <>
+                    <Link
+                      href={getProfileRoute()}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start gap-2"
+                      >
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                      onClick={async () => {
+                        setIsMobileMenuOpen(false);
+                        await handleLogout();
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/login");
+                      }}
+                    >
+                      Login
+                    </Button>
+                    <Button
+                      className="w-full justify-start"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push("/register");
+                      }}
+                    >
+                      Get Started
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">
+                  Theme
+                </span>
+                <ModeToggle />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
