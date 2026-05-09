@@ -54,19 +54,19 @@ const METRIC_META: Record<
 > = {
   activeTutors: {
     icon: UserCheck,
-    tone: "from-sky-50 to-blue-50 text-primary",
+    tone: "from-sky-50 to-blue-50 text-primary dark:from-white/[0.05] dark:to-white/[0.08]",
   },
   sessionsBooked: {
     icon: CalendarCheck2,
-    tone: "from-emerald-50 to-emerald-100 text-emerald-700",
+    tone: "from-emerald-50 to-emerald-100 text-emerald-700 dark:from-emerald-500/10 dark:to-emerald-500/15 dark:text-emerald-300",
   },
   avgRating: {
     icon: Star,
-    tone: "from-amber-50 to-amber-100 text-amber-600",
+    tone: "from-amber-50 to-amber-100 text-amber-600 dark:from-amber-500/10 dark:to-amber-500/15 dark:text-amber-300",
   },
   totalReviews: {
     icon: MessageSquareText,
-    tone: "from-violet-50 to-indigo-50 text-indigo-600",
+    tone: "from-violet-50 to-indigo-50 text-indigo-600 dark:from-slate-500/10 dark:to-slate-500/15 dark:text-slate-200",
   },
 };
 
@@ -115,11 +115,10 @@ const useReducedMotion = () => {
 };
 
 const useCountUp = (target: number, animate: boolean) => {
-  const [value, setValue] = useState(target);
+  const [animatedValue, setAnimatedValue] = useState(0);
 
   useEffect(() => {
     if (!animate) {
-      setValue(target);
       return;
     }
 
@@ -131,20 +130,19 @@ const useCountUp = (target: number, animate: boolean) => {
     const tick = (now: number) => {
       const progress = Math.min((now - startTime) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(startValue + (target - startValue) * eased);
+      setAnimatedValue(startValue + (target - startValue) * eased);
 
       if (progress < 1) {
         frameId = window.requestAnimationFrame(tick);
       }
     };
 
-    setValue(startValue);
     frameId = window.requestAnimationFrame(tick);
 
     return () => window.cancelAnimationFrame(frameId);
   }, [animate, target]);
 
-  return value;
+  return animate ? animatedValue : target;
 };
 
 const isZeroAnalytics = (analytics: AnalyticsShape) =>
@@ -243,7 +241,7 @@ const AnalyticsMetricCard = ({
           <div className="space-y-1">
             <div
               className={cn(
-                "font-semibold tracking-tight text-[#0B1F3B]",
+                "font-semibold tracking-tight text-slate-900 dark:text-white",
                 variant === "featured"
                   ? "text-4xl sm:text-5xl"
                   : "text-3xl sm:text-4xl",
@@ -332,7 +330,7 @@ export default function StatisticsImpact({
 
         setAnalytics(resolvedAnalytics);
         setStatus("success");
-      } catch (error) {
+      } catch {
         if (controller.signal.aborted) {
           return;
         }
@@ -371,12 +369,12 @@ export default function StatisticsImpact({
     <section
       aria-labelledby="statistics-impact-heading"
       className={cn(
-        "relative overflow-hidden rounded-[28px] border border-slate-100 bg-white/60 backdrop-blur-sm bg-linear-to-br from-white/80 via-[#F8FAFF]/60 to-[#EEF4FF]/50 shadow-2xl",
+        "relative overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 backdrop-blur-sm bg-linear-to-br from-white via-slate-50 to-slate-100 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/[0.08] dark:bg-white/[0.04] dark:from-white/[0.06] dark:via-white/[0.03] dark:to-transparent dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)]",
         variant === "featured" ? "p-6 sm:p-8" : "p-4 sm:p-6",
       )}
       aria-busy={status === "loading"}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,102,255,0.10),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.06),transparent_26%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.08),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.05),transparent_26%)] dark:bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.14),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.08),transparent_26%)]" />
       <div className="relative z-10 space-y-4">
         <div className="flex flex-col gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
@@ -394,23 +392,23 @@ export default function StatisticsImpact({
             >
               {labels.heading}
             </h3>
-            <p className="max-w-md text-sm leading-6 text-slate-600 sm:text-[15px]">
+            <p className="max-w-md text-sm leading-6 text-slate-600 sm:text-[15px] dark:text-slate-400">
               {labels.subhead}
             </p>
           </div>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
+        <div className="h-px w-full bg-linear-to-r from-transparent via-slate-200/80 to-transparent dark:via-white/10" />
 
         {status === "loading" ? (
           <div
-            className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white sm:grid-cols-2 lg:grid-cols-4"
+            className="grid grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white sm:grid-cols-2 lg:grid-cols-4 dark:border-white/[0.08] dark:bg-white/[0.03]"
             data-testid="statistics-impact-loading"
           >
             {METRIC_ORDER.map((metric) => (
               <div
                 key={metric}
-                className="border-b border-slate-200 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+                className="border-b border-slate-200 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 dark:border-white/[0.08]"
               >
                 <SkeletonCard showIcons={showIcons} />
               </div>
@@ -428,7 +426,7 @@ export default function StatisticsImpact({
           >
             {metricCards.map(({ metric, value }) => (
               <div key={metric}>
-                <div className="rounded-2xl border border-slate-100 bg-white/95 shadow-lg">
+                <div className="rounded-2xl border border-slate-200 bg-white/95 shadow-lg dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-[0_18px_42px_rgba(0,0,0,0.18)]">
                   <AnalyticsMetricCard
                     metric={metric}
                     value={value}
@@ -444,17 +442,17 @@ export default function StatisticsImpact({
         ) : null}
 
         {status === "empty" ? (
-          <Card className="border-slate-200 bg-white/95 shadow-[0_18px_42px_rgba(2,8,23,0.06)]">
+          <Card className="border-slate-200 bg-white/95 shadow-[0_18px_42px_rgba(2,8,23,0.06)] dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-[0_18px_42px_rgba(0,0,0,0.18)]">
             <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-white/[0.06] dark:text-primary-200">
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-lg font-semibold text-[#0B1F3B]">
+                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {labels.emptyTitle}
                   </h4>
-                  <p className="text-sm leading-6 text-slate-500">
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {labels.emptyBody}
                   </p>
                 </div>
@@ -465,7 +463,7 @@ export default function StatisticsImpact({
                   type="button"
                   onClick={handleRetry}
                   variant="outline"
-                  className="rounded-full border-slate-200 bg-white text-slate-700 shadow-sm"
+                  className="rounded-full border-slate-200 bg-white text-slate-700 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-200"
                 >
                   <RefreshCw className="h-4 w-4" />
                   {labels.retryLabel}
@@ -483,17 +481,17 @@ export default function StatisticsImpact({
         ) : null}
 
         {status === "error" ? (
-          <Card className="border-slate-200 bg-white/95 shadow-[0_18px_42px_rgba(2,8,23,0.06)]">
+          <Card className="border-slate-200 bg-white/95 shadow-[0_18px_42px_rgba(2,8,23,0.06)] dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-[0_18px_42px_rgba(0,0,0,0.18)]">
             <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-200">
                   <ShieldAlert className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-lg font-semibold text-[#0B1F3B]">
+                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                     {labels.errorTitle}
                   </h4>
-                  <p className="text-sm leading-6 text-slate-500">
+                  <p className="text-sm leading-6 text-slate-600 dark:text-slate-400">
                     {labels.errorBody}
                   </p>
                 </div>
@@ -503,7 +501,7 @@ export default function StatisticsImpact({
                 <Button
                   type="button"
                   onClick={handleRetry}
-                  className="rounded-full bg-primary text-primary-foreground shadow-[0_16px_30px_rgba(0,102,255,0.18)]"
+                  className="rounded-full bg-primary text-primary-foreground shadow-[0_16px_30px_rgba(0,102,255,0.18)] dark:shadow-[0_16px_30px_rgba(0,0,0,0.28)]"
                 >
                   <RefreshCw className="h-4 w-4" />
                   {labels.retryLabel}

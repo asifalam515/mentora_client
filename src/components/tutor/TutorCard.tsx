@@ -156,8 +156,8 @@ const SingleTutorCard = ({
       <CardContent className="p-0 flex flex-col h-full">
         {/* Top Section */}
         <div className="relative p-6 pb-5">
-          <div className="flex justify-between items-start">
-            <div className="flex gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start">
+            <div className="flex gap-4 min-w-0">
               <div className="relative">
                 <Avatar className="h-16 w-16 rounded-xl ring-2 ring-background shadow-md">
                   <AvatarImage
@@ -176,9 +176,9 @@ const SingleTutorCard = ({
                   </span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-bold tracking-tight text-foreground/95 group-hover:text-primary transition-colors">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="text-lg font-bold tracking-tight text-foreground/95 group-hover:text-primary transition-colors wrap-break-word">
                     {name}
                   </h3>
                   {isVerified && (
@@ -190,11 +190,11 @@ const SingleTutorCard = ({
                     </Badge>
                   )}
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 min-w-0">
                   {education && (
                     <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <GraduationCap className="h-3.5 w-3.5 text-primary/70" />
-                      <span className="truncate">{education}</span>
+                      <span className="truncate max-w-full">{education}</span>
                     </div>
                   )}
                   {location && (
@@ -210,7 +210,7 @@ const SingleTutorCard = ({
               <Button
                 variant="outline"
                 size="icon"
-                className={`h-9 w-9 rounded-full border-border/70 bg-background/70 transition-all hover:border-primary/50 hover:text-primary ${saved ? "border-primary bg-primary/10 text-primary" : ""}`}
+                className={`h-9 w-9 self-start rounded-full border-border/70 bg-background/70 transition-all hover:border-primary/50 hover:text-primary ${saved ? "border-primary bg-primary/10 text-primary" : ""}`}
                 onClick={handleSaveClick}
               >
                 {saved ? (
@@ -286,7 +286,7 @@ const SingleTutorCard = ({
 
         <div className="mt-auto">
           <Separator className="opacity-40" />
-          <div className="flex items-center justify-between bg-muted/35 p-4">
+          <div className="flex flex-col gap-4 bg-muted/35 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-black tracking-tight text-foreground">
@@ -301,11 +301,11 @@ const SingleTutorCard = ({
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 variant="outline"
                 size="sm"
-                className="border-border/70 bg-background/80 text-xs font-semibold hover:border-primary/40"
+                className="w-full border-border/70 bg-background/80 text-xs font-semibold hover:border-primary/40 sm:w-auto"
                 asChild
               >
                 <Link href={`/tutors/${id}`}>Show Details</Link>
@@ -314,7 +314,7 @@ const SingleTutorCard = ({
               {showBookButton && (
                 <Button
                   size="sm"
-                  className="bg-primary px-4 font-bold shadow-[0_10px_24px_-12px_rgba(14,116,144,0.9)] hover:bg-primary/90"
+                  className="w-full bg-primary px-4 font-bold shadow-[0_10px_24px_-12px_rgba(14,116,144,0.9)] hover:bg-primary/90 sm:w-auto"
                   onClick={handleBookClick}
                 >
                   Book Session

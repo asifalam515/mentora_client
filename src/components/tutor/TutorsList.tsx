@@ -29,9 +29,9 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import SingleTutorCard from "./TutorCard";
+import SingleTutorCard, { type Tutor } from "./TutorCard";
 
-interface TutorsListProps {
+export interface TutorsListProps {
   tutors: Tutor[];
   isLoading?: boolean;
   onFilterChange?: (filters: Filters) => void;
@@ -53,7 +53,7 @@ interface TutorsListProps {
   onPageChange?: (newPage: number) => void;
 }
 
-interface Filters {
+export interface Filters {
   minPrice: number;
   maxPrice: number;
   minRating: number;
@@ -70,10 +70,16 @@ interface FilterPanelProps {
   filters: Filters;
   priceRange: [number, number];
   onPriceRangeChange: (range: [number, number]) => void;
-  onFilterChange: (key: keyof Filters, value: any) => void;
+  onFilterChange: (key: keyof Filters, value: Filters[keyof Filters]) => void;
   onResetFilters: () => void;
   onPriceRangeCommit?: (range: [number, number]) => void;
+  className?: string;
 }
+
+type CategoryOption = {
+  id: string;
+  name: string;
+};
 
 const FilterPanel = ({
   filters,
@@ -82,8 +88,9 @@ const FilterPanel = ({
   onPriceRangeCommit,
   onFilterChange,
   onResetFilters,
+  className = "",
 }: FilterPanelProps) => {
-  const [subjectsList, setSubjectsList] = useState<any[]>([]);
+  const [subjectsList, setSubjectsList] = useState<CategoryOption[]>([]);
   useEffect(() => {
     const loadSubjects = async () => {
       const res = await categoriesService.getCategories();
@@ -93,7 +100,7 @@ const FilterPanel = ({
   }, []);
 
   return (
-    <Card className="sticky top-24">
+    <Card className={`sticky top-24 ${className}`.trim()}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -160,7 +167,7 @@ const FilterPanel = ({
         <div className="space-y-3">
           <Label className="font-medium">Subjects</Label>
           <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-            {subjectsList.map((item: any) => (
+            {subjectsList.map((item) => (
               <div key={item.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={item.id}
@@ -238,7 +245,10 @@ const TutorsList = ({
   };
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof Filters, value: any) => {
+  const handleFilterChange = (
+    key: keyof Filters,
+    value: Filters[keyof Filters],
+  ) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
 
@@ -316,17 +326,17 @@ const TutorsList = ({
   return (
     <div className="bg-background">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 py-12">
+      <div className="bg-linear-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20 py-12">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
             <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
               <Award className="h-3 w-3 mr-2" />
               Find Your Perfect Tutor
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
               Browse Expert <span className="text-primary">Tutors</span>
             </h1>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-base sm:text-lg text-muted-foreground mb-8">
               Connect with verified tutors across 50+ subjects. Personalized
               1-on-1 sessions tailored to your needs.
             </p>
@@ -337,21 +347,24 @@ const TutorsList = ({
       <div className="container mx-auto px-4 py-8">
         {/* Search and Filters Bar */}
         <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-              <div className="relative">
+            <form
+              onSubmit={handleSearch}
+              className="w-full lg:flex-1 lg:max-w-2xl"
+            >
+              <div className="relative flex flex-col gap-2 sm:block">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search tutors by subject, name, or expertise..."
-                  className="pl-10 h-12 text-base"
+                  className="h-12 text-base pl-10 pr-4 sm:pr-24"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button
                   type="submit"
-                  className="absolute right-1 top-1 h-10"
+                  className="h-11 w-full sm:absolute sm:right-1 sm:top-1 sm:h-10 sm:w-auto"
                   size="sm"
                 >
                   Search
@@ -360,15 +373,16 @@ const TutorsList = ({
             </form>
 
             {/* Layout Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:flex-nowrap">
               {onLayoutChange && (
                 <>
                   <Tabs
                     defaultValue="grid"
                     value={layout}
                     onValueChange={(v) => onLayoutChange(v as "grid" | "list")}
+                    className="w-full sm:w-auto"
                   >
-                    <TabsList className="grid w-24 grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-2 sm:w-24">
                       <TabsTrigger value="grid">
                         <Grid className="h-4 w-4" />
                       </TabsTrigger>
@@ -384,7 +398,7 @@ const TutorsList = ({
               {/* Mobile Filter Toggle */}
               <Button
                 variant="outline"
-                className="lg:hidden"
+                className="w-full sm:w-auto lg:hidden"
                 onClick={() => setShowFilterPanel(!showFilterPanel)}
               >
                 <Filter className="h-4 w-4 mr-2" />
@@ -396,7 +410,7 @@ const TutorsList = ({
 
               {/* Sort Dropdown */}
               <Select value={sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-45">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -470,8 +484,8 @@ const TutorsList = ({
                 <FilterPanel
                   filters={filters}
                   priceRange={priceRange}
-                  onPriceRangeChange={setPriceRange} // for live UI
-                  onPriceRangeCommit={handlePriceRangeCommit} // final value
+                  onPriceRangeChange={setPriceRange}
+                  onPriceRangeCommit={handlePriceRangeCommit}
                   onFilterChange={handleFilterChange}
                   onResetFilters={resetFilters}
                 />
@@ -484,7 +498,7 @@ const TutorsList = ({
                     className="absolute inset-0 bg-black/50"
                     onClick={() => setShowFilterPanel(false)}
                   />
-                  <div className="absolute right-0 top-0 h-full w-80 bg-background p-6 overflow-y-auto">
+                  <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-background px-4 py-6 overflow-y-auto shadow-2xl sm:max-w-md sm:px-6">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-bold">Filters</h3>
                       <Button
@@ -501,6 +515,7 @@ const TutorsList = ({
                       onPriceRangeChange={setPriceRange}
                       onFilterChange={handleFilterChange}
                       onResetFilters={resetFilters}
+                      className="border-0 shadow-none"
                     />
                   </div>
                 </div>
@@ -514,10 +529,10 @@ const TutorsList = ({
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold">
+                  <h2 className="text-xl sm:text-2xl font-bold">
                     {tutors.length} Expert Tutors
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground">
                     Available for personalized 1-on-1 sessions
                   </p>
                 </div>
@@ -541,7 +556,7 @@ const TutorsList = ({
                 <div
                   className={
                     layout === "grid"
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+                      ? "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3"
                       : "space-y-4"
                   }
                 >
@@ -561,14 +576,15 @@ const TutorsList = ({
 
                 {/* Pagination Stats */}
 
-                <div className="mt-8 flex items-center justify-between text-sm text-muted-foreground">
-                  <span>
+                <div className="mt-8 flex flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-center sm:text-left">
                     Showing {tutors.length} of {pagination?.total || 0} tutors
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() =>
                         onPageChange?.((pagination?.page || 1) - 1)
                       }
@@ -583,6 +599,7 @@ const TutorsList = ({
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() =>
                         onPageChange?.((pagination?.page || 1) + 1)
                       }
@@ -602,4 +619,3 @@ const TutorsList = ({
 };
 
 export default TutorsList;
-export type { Filters, TutorsListProps };
