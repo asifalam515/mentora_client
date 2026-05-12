@@ -84,6 +84,17 @@ export interface SmartMatchResponse {
   };
 }
 
+const handleApiError = (error: unknown, defaultMessage: string): never => {
+  let errorMessage = error instanceof Error ? error.message : defaultMessage;
+  const lowerMsg = errorMessage.trim().toLowerCase();
+  
+  if (lowerMsg.startsWith("<!doctype") || lowerMsg.startsWith("<html") || lowerMsg.includes("<title>error</title>") || lowerMsg.includes("cannot post")) {
+    errorMessage = "Smart Match service is currently unavailable. Please try again later.";
+  }
+  
+  throw new Error(errorMessage);
+};
+
 class SmartMatchService {
   private baseUrl: string;
 
@@ -104,9 +115,7 @@ class SmartMatchService {
 
       return response as SmartMatchResponse;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to find matches";
-      throw new Error(errorMessage);
+      handleApiError(error, "Failed to find matches");
     }
   }
 
@@ -126,9 +135,7 @@ class SmartMatchService {
 
       return response as SmartMatchResponse;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to get matches";
-      throw new Error(errorMessage);
+      handleApiError(error, "Failed to get matches");
     }
   }
 }
