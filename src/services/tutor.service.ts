@@ -33,6 +33,7 @@ export const tutorService = {
         method: "GET",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
+        next: { revalidate: 3600 },
       });
 
       if (!res.ok) throw new Error("Failed to fetch tutors");
@@ -53,7 +54,9 @@ export const tutorService = {
         `${process.env.NEXT_PUBLIC_BASE_URL}/tutor-profiles/${tutorId}`,
       );
 
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), {
+        next: { revalidate: 3600 },
+      });
 
       if (!res.ok) {
         if (res.status === 404) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import type { AnalyticsApiResponse } from "@/types/statistics-impact";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Cache for 1 hour
 
 const getBackendApiBase = () => {
   const base = (
@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const response = await fetch(`${getBackendApiBase()}/analytics`, {
       method: "GET",
-      cache: "no-store",
+      next: { revalidate: 3600 },
       headers: {
         Accept: "application/json",
       },

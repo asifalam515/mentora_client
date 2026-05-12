@@ -276,10 +276,10 @@ export default function StatisticsImpact({
 }: StatisticsImpactProps) {
   const labels = resolveStrings(strings);
   const reducedMotion = useReducedMotion();
-  const [analytics, setAnalytics] = useState<AnalyticsShape | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsShape | null>(fallback ?? null);
   const [status, setStatus] = useState<
     "loading" | "success" | "error" | "empty"
-  >("loading");
+  >(fallback ? "success" : "loading");
   const [refreshNonce, setRefreshNonce] = useState(0);
   const requestRef = useRef<AbortController | null>(null);
 
@@ -301,6 +301,10 @@ export default function StatisticsImpact({
     requestRef.current = controller;
 
     const loadAnalytics = async () => {
+      if (fallback && refreshNonce === 0) {
+        return; // Skip initial fetch if SSR fallback is provided
+      }
+      
       setStatus("loading");
 
       try {
