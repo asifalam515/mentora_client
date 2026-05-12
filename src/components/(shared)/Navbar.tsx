@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { ModeToggle } from "./ModeToggle";
 
@@ -196,20 +197,20 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`sticky top-0 z-50 w-full border-b bg-background transition-all duration-200 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled
-          ? "backdrop-blur supports-backdrop-filter:bg-background/80 shadow-sm"
-          : ""
+          ? "glass shadow-sm py-1 border-b"
+          : "bg-background py-2 border-b border-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-14 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-              <BookOpen className="h-5 w-5" />
+          <Link href="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <BookOpen className="h-4 w-4" />
             </div>
-            <span className="text-xl font-bold"> Mentora</span>
+            <span className="text-xl font-bold tracking-tight">Mentora</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-1">
@@ -306,9 +307,16 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 shadow-lg">
-            <div className="container mx-auto px-4 py-4 space-y-4">
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="md:hidden border-t bg-background/95 backdrop-blur shadow-lg overflow-hidden"
+            >
+              <div className="container mx-auto px-4 py-4 space-y-4">
               <div className="grid gap-2">
                 {publicNavItems.map((item) => (
                   <Link
@@ -406,8 +414,9 @@ const Navbar = () => {
                 <ModeToggle />
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
       </div>
     </nav>
   );

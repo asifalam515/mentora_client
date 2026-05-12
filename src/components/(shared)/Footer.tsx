@@ -102,17 +102,15 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-background border-t mt-auto">
+    <footer className="bg-background mt-auto overflow-hidden">
+      <Separator />
       {/* Newsletter Section */}
-      <div className="bg-primary/5">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+      <div className="border-b border-border/40">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="h-6 w-6 text-primary" />
-                <h3 className="text-xl font-bold">Stay Updated</h3>
-              </div>
-              <p className="text-muted-foreground">
+              <h3 className="text-2xl font-bold tracking-tight mb-2">Stay Updated</h3>
+              <p className="text-muted-foreground text-sm">
                 Get the latest tips, success stories, and platform updates
                 delivered to your inbox.
               </p>
@@ -122,14 +120,14 @@ const Footer = () => {
                 <Input
                   type="email"
                   placeholder="Enter your email"
-                  className="flex-1"
+                  className="flex-1 bg-background"
                   required
                 />
-                <Button type="submit" className="sm:w-auto">
+                <Button type="submit" className="sm:w-auto shadow-sm">
                   Subscribe
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground/70">
                 By subscribing, you agree to our Privacy Policy and consent to
                 receive updates.
               </p>

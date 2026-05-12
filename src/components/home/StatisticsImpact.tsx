@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import SectionReveal from "@/components/(shared)/SectionReveal";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -366,6 +367,7 @@ export default function StatisticsImpact({
   };
 
   return (
+    <SectionReveal delay={0.1}>
     <section
       aria-labelledby="statistics-impact-heading"
       className={cn(
@@ -518,5 +520,6 @@ export default function StatisticsImpact({
         ) : null}
       </div>
     </section>
+    </SectionReveal>
   );
 }

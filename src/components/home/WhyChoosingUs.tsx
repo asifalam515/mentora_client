@@ -1,6 +1,7 @@
 "use client";
 
 import StatisticsImpact from "@/components/home/StatisticsImpact";
+import SectionReveal from "@/components/(shared)/SectionReveal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -347,6 +348,7 @@ export default function WhyChoosingUs({
   );
 
   return (
+    <SectionReveal delay={0.2}>
     <section
       aria-labelledby="why-choosing-us-heading"
       className="relative isolate overflow-hidden bg-linear-to-b from-[#F8FAFF] via-white to-[#EEF4FF] py-16 sm:py-20"
@@ -630,5 +632,6 @@ export default function WhyChoosingUs({
         </div>
       </div>
     </section>
+    </SectionReveal>
   );
 }

@@ -25,9 +25,11 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Roles } from "@/constants/roles";
 import { loginUser, registerUser } from "@/services/auth";
-import { useAuthStore } from "@/store/useAuthStore.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "@/store/useAuthStore.ts";
 import { jwtDecode } from "jwt-decode";
+import { motion } from "framer-motion";
+import { FadeIn } from "@/components/ui/fade-in";
 import {
   ArrowRight,
   BookOpen,
@@ -178,36 +180,28 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center p-4">
-      {/* Background Decorative Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute top-1/4 left-1/3 h-60 w-60 rounded-full bg-blue-500/5 blur-2xl" />
-      </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Premium subtle grid background */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-6xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Left Side - Branding & Info */}
           <div className="space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                  <BookOpen className="h-7 w-7 text-white" />
+                <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+                  <BookOpen className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">SkillBridge</h1>
-                  <p className="text-muted-foreground">
-                    Connect. Learn. Succeed.
-                  </p>
+                  <h1 className="text-xl font-bold tracking-tight">SkillBridge</h1>
                 </div>
               </div>
 
-              <h2 className="text-4xl font-bold tracking-tight">
-                Start Your{" "}
-                <span className="text-primary">Learning Journey</span> Today
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">
+                Start Your <span className="bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">Learning Journey</span> Today
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base text-muted-foreground max-w-md">
                 Join thousands of learners and experts who are transforming
                 education through personalized tutoring.
               </p>
@@ -247,25 +241,16 @@ const RegisterForm = () => {
           </div>
 
           {/* Right Side - Registration Form */}
-          <Card className="border-2 shadow-2xl overflow-hidden">
+          <Card className="border border-border/50 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
             {/* Card Header */}
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl">
-                    Create Your Account
-                  </CardTitle>
-                  <CardDescription>
-                    Join SkillBridge in under 2 minutes
-                  </CardDescription>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Free Signup
-                </Badge>
+            <CardHeader className="pb-4 border-b border-border/30">
+              <div className="flex flex-col gap-1.5">
+                <CardTitle className="text-2xl tracking-tight">
+                  Create Your Account
+                </CardTitle>
+                <CardDescription>
+                  Join SkillBridge in under 2 minutes
+                </CardDescription>
               </div>
             </CardHeader>
 
@@ -280,42 +265,51 @@ const RegisterForm = () => {
                     <Label className="text-base font-medium">
                       I want to join as a
                     </Label>
-                    <Tabs
-                      defaultValue="STUDENT"
-                      className="w-full"
-                      onValueChange={(value) =>
-                        form.setValue("role", value as "STUDENT" | "TUTOR")
-                      }
-                    >
-                      <TabsList className="grid grid-cols-2">
-                        <TabsTrigger value={Roles.student} className="gap-2">
-                          <GraduationCap className="h-4 w-4" />
-                          Student
-                        </TabsTrigger>
-                        <TabsTrigger value={Roles.tutor} className="gap-2">
-                          <User className="h-4 w-4" />
-                          Tutor
-                        </TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="student" className="space-y-2 pt-4">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                          <p className="text-sm text-muted-foreground">
-                            Perfect for learners seeking personalized guidance
-                          </p>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="TUTOR" className="space-y-2 pt-4">
-                        <div className="flex items-start gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                          <p className="text-sm text-muted-foreground">
-                            Share your expertise and earn money on your schedule
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+                    <div className="relative flex w-full rounded-xl bg-muted p-1 border border-border/50">
+                      {(["STUDENT", "TUTOR"] as const).map((role) => {
+                        const isActive = form.watch("role") === role;
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => form.setValue("role", role)}
+                            className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-colors duration-200 ${
+                              isActive
+                                ? "text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {isActive && (
+                              <motion.div
+                                layoutId="activeRoleTab"
+                                className="absolute inset-0 rounded-lg bg-background shadow-sm"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                              />
+                            )}
+                            <span className="relative z-10 flex items-center gap-2">
+                              {role === "STUDENT" ? (
+                                <GraduationCap className="h-4 w-4" />
+                              ) : (
+                                <User className="h-4 w-4" />
+                              )}
+                              {role === "STUDENT" ? "Student" : "Tutor"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Role Description */}
+                    <FadeIn key={form.watch("role")}>
+                      <div className="flex items-start gap-2 pt-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
+                        <p className="text-sm text-muted-foreground">
+                          {form.watch("role") === "STUDENT" 
+                            ? "Perfect for learners seeking personalized guidance and 1-on-1 tutoring sessions."
+                            : "Share your expertise, set your own rates, and earn money on your schedule."}
+                        </p>
+                      </div>
+                    </FadeIn>
                   </div>
 
                   <Separator />

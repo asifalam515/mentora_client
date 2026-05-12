@@ -183,34 +183,28 @@ const LoginForm = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center p-4">
-      {/* Background Decorative Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute top-1/4 left-1/3 h-60 w-60 rounded-full bg-blue-500/5 blur-2xl" />
-      </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Premium subtle grid background */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-6xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Left Side - Branding & Info */}
           <div className="space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                  <BookOpen className="h-7 w-7 text-white" />
+                <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+                  <BookOpen className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">SkillBridge</h1>
-                  <p className="text-muted-foreground">Welcome Back!</p>
+                  <h1 className="text-xl font-bold tracking-tight">SkillBridge</h1>
                 </div>
               </div>
 
-              <h2 className="text-4xl font-bold tracking-tight">
-                Continue Your{" "}
-                <span className="text-primary">Learning Journey</span>
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">
+                Welcome <span className="bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">Back</span>
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base text-muted-foreground max-w-md">
                 Sign in to access your personalized dashboard, upcoming
                 sessions, and learning resources.
               </p>
@@ -267,23 +261,14 @@ const LoginForm = () => {
           </div>
 
           {/* Right Side - Login Form */}
-          <Card className="border-2 shadow-2xl overflow-hidden">
+          <Card className="border border-border/50 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
             {/* Card Header */}
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl">Welcome Back</CardTitle>
-                  <CardDescription>
-                    Sign in to continue your learning journey
-                  </CardDescription>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  <UserCheck className="h-3 w-3 mr-1" />
-                  Secure
-                </Badge>
+            <CardHeader className="pb-4 border-b border-border/30">
+              <div className="flex flex-col gap-1.5">
+                <CardTitle className="text-2xl tracking-tight">Sign In</CardTitle>
+                <CardDescription>
+                  Enter your credentials to access your account
+                </CardDescription>
               </div>
             </CardHeader>
 

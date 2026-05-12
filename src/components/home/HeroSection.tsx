@@ -1,9 +1,11 @@
 "use client";
 
+import { FadeIn, FadeInStagger } from "@/components/ui/fade-in";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { apiJson } from "@/lib/api-client";
 import {
   Award,
@@ -17,6 +19,7 @@ import {
   Shield,
   Star,
   Users,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -152,130 +155,153 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-linear-to-b from-background via-primary/5 to-background">
-      {/* Background Decorative Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute top-1/3 left-1/4 h-40 w-40 rounded-full bg-blue-500/10 blur-2xl" />
+    <section className="relative overflow-hidden bg-background">
+      {/* Premium subtle grid background */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
+        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary opacity-20 blur-[100px]"></div>
       </div>
 
       <div className="container relative z-10 mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
           {/* Left Content */}
-          <div className="space-y-6 sm:space-y-8">
+          <FadeInStagger className="space-y-6 sm:space-y-8">
             {/* Badge */}
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium text-primary sm:text-sm">
-                Trusted by 10,000+ learners worldwide
-              </span>
-            </div>
+            <FadeIn>
+              <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-primary/10 px-4 py-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-xs font-medium text-primary sm:text-sm">
+                  Trusted by 10,000+ learners worldwide
+                </span>
+              </div>
+            </FadeIn>
 
             {/* Main Heading */}
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              <span className="block">Unlock Your</span>
-              <span className="block text-primary">Learning Potential</span>
-              <span className="block">with Expert Tutors</span>
-            </h1>
+            <FadeIn>
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
+                <span className="block text-foreground">Unlock Your</span>
+                <span className="block bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">Learning Potential</span>
+                <span className="block text-foreground">with Expert Tutors</span>
+              </h1>
+            </FadeIn>
 
             {/* Description */}
-            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:w-5/6 lg:text-xl">
-              Connect 1-on-1 with verified expert tutors across 50+ subjects.
-              Flexible scheduling, personalized sessions, and guaranteed
-              progress.
-            </p>
+            <FadeIn>
+              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:w-5/6 lg:text-xl">
+                Connect 1-on-1 with verified expert tutors across 50+ subjects.
+                Flexible scheduling, personalized sessions, and guaranteed
+                progress.
+              </p>
+            </FadeIn>
 
             {/* Features List */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 flex-none text-green-500 sm:h-5 sm:w-5" />
-                  <span className="text-sm leading-snug">{feature}</span>
-                </div>
-              ))}
-            </div>
+            <FadeIn>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {features.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 flex-none text-green-500 sm:h-5 sm:w-5" />
+                    <span className="text-sm leading-snug">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </FadeIn>
 
             {/* Search Bar */}
-            <Card className="border-primary/20 shadow-lg">
-              <CardContent className="p-4 sm:p-6">
-                <form onSubmit={handleSearch} className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    Find Tutors
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </div>
-
-                  {/* Popular Subjects */}
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Popular subjects:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {popularCategories.map((subject, index) => (
-                        <Button
-                          key={subject}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className={`rounded-full gap-2 ${
-                            selectedSubject === subject
-                              ? "border-primary bg-primary/10"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedSubject(subject)}
-                        >
-                          <span
-                            className={`${SUBJECT_DOT_COLORS[index % SUBJECT_DOT_COLORS.length]} h-2 w-2 rounded-full`}
-                          />
-                          {subject}
-                        </Button>
-                      ))}
+            <FadeIn>
+              <Card className="border-primary/20 shadow-lg">
+                <CardContent className="p-4 sm:p-6">
+                  <form onSubmit={handleSearch} className="space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="What do you want to learn?"
+                          className="h-12 w-full bg-background pl-10 text-base"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      <Button type="submit" size="lg" className="h-12 w-full sm:w-auto font-medium transition-all duration-200 active:scale-[0.98]">
+                        Find Tutors
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+
+                    {/* Popular Subjects */}
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Popular subjects:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {popularCategories.map((subject, index) => (
+                          <Button
+                            key={subject}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className={`rounded-full gap-2 transition-all duration-200 active:scale-[0.98] ${
+                              selectedSubject === subject
+                                ? "border-primary bg-primary/10"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedSubject(subject)}
+                          >
+                            <span
+                              className={`${SUBJECT_DOT_COLORS[index % SUBJECT_DOT_COLORS.length]} h-2 w-2 rounded-full`}
+                            />
+                            {subject}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </FadeIn>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" className="h-12 w-full px-8 sm:w-auto" asChild>
-                <Link href="/register">
-                  Start Learning Free
-                  <BookOpen className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-12 w-full px-8 sm:w-auto"
-                asChild
-              >
-                <Link href="/become-tutor">
-                  Become a Tutor
-                  <Award className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+            <FadeIn>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Button size="lg" className="h-12 w-full px-8 sm:w-auto transition-all duration-200 active:scale-[0.98]" asChild>
+                  <Link href="/register">
+                    Start Learning Free
+                    <BookOpen className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full px-8 sm:w-auto transition-all duration-200 active:scale-[0.98]"
+                  asChild
+                >
+                  <Link href="/become-tutor">
+                    Become a Tutor
+                  </Link>
+                </Button>
+              </div>
+            </FadeIn>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 pt-4 sm:gap-6 md:grid-cols-4">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="flex h-5 w-5 items-center justify-center text-primary sm:h-auto sm:w-auto">
-                      {stat.icon}
+            <FadeIn>
+              <div className="grid grid-cols-2 gap-4 pt-4 sm:gap-6 md:grid-cols-4">
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <div className="flex h-5 w-5 items-center justify-center text-primary sm:h-auto sm:w-auto">
+                        {stat.icon}
+                      </div>
+                      <div className="text-xl font-bold sm:text-2xl">
+                        {stat.number}
+                      </div>
                     </div>
-                    <div className="text-xl font-bold sm:text-2xl">
-                      {stat.number}
+                    <div className="text-sm text-muted-foreground">
+                      {stat.label}
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            </FadeIn>
+          </FadeInStagger>
 
           {/* Right Content */}
           <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
@@ -555,20 +581,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Wave Divider */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg
-          className="w-full h-16 text-background"
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0 120L60 110C120 100 240 80 360 70C480 60 600 60 720 55C840 50 960 40 1080 35C1200 30 1320 30 1380 30L1440 30V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
     </section>
   );
 };
