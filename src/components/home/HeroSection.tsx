@@ -54,8 +54,7 @@ const HeroSection = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [popularCategories, setPopularCategories] = useState<string[]>([]);
   const [topTutors, setTopTutors] = useState<TopTutor[]>([]);
-  console.log("popularCategories", popularCategories);
-  console.log("topTutors", topTutors);
+ 
 
   useEffect(() => {
     const fetchPopularCategories = async () => {
