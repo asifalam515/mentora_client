@@ -1,14 +1,13 @@
 "use client";
 
-import { FadeIn, FadeInStagger } from "@/components/ui/fade-in";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FadeIn, FadeInStagger } from "@/components/ui/fade-in";
 import { Input } from "@/components/ui/input";
 import { apiJson } from "@/lib/api-client";
 import {
-  Award,
   BookOpen,
   Calculator,
   CheckCircle,
@@ -16,10 +15,10 @@ import {
   Clock,
   GraduationCap,
   Play,
+  Search,
   Shield,
   Star,
-  Users,
-  Search,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -55,6 +54,8 @@ const HeroSection = () => {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [popularCategories, setPopularCategories] = useState<string[]>([]);
   const [topTutors, setTopTutors] = useState<TopTutor[]>([]);
+  console.log("popularCategories", popularCategories);
+  console.log("topTutors", topTutors);
 
   useEffect(() => {
     const fetchPopularCategories = async () => {
