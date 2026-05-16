@@ -4,6 +4,7 @@ import { PremiumHowItWorks } from "@/components/(shared)/HowWorks";
 import SectionReveal from "@/components/(shared)/SectionReveal";
 import HeroSection from "@/components/home/HeroSection";
 import StatisticsImpact from "@/components/home/StatisticsImpact";
+import TrustedCompanies from "@/components/home/TrustedCompanies";
 import Tutors from "./tutors/page";
 import { AnalyticsShape } from "@/types/statistics-impact";
 
@@ -60,6 +61,8 @@ const HomePage = async () => {
           <StatisticsImpact variant="featured" fallback={analyticsData} />
         </div>
       </SectionReveal>
+      
+      <TrustedCompanies />
       <Footer></Footer>
     </div>
   );

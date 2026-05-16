@@ -15,10 +15,21 @@ const getBackendApiBase = () => {
   return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
 };
 
-const isAnalyticsResponse = (value: unknown): value is AnalyticsApiResponse => {
+interface BackendAnalyticsResponse {
+  kpis: {
+    totalTutors: number;
+    totalBookings: number;
+    avgRating: number;
+    totalReviews: number;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+const isBackendAnalyticsResponse = (value: unknown): value is BackendAnalyticsResponse => {
   if (!value || typeof value !== "object") return false;
-  const candidate = value as { analytics?: unknown };
-  return !!candidate.analytics && typeof candidate.analytics === "object";
+  const candidate = value as { kpis?: unknown };
+  return !!candidate.kpis && typeof candidate.kpis === "object";
 };
 
 export async function GET() {
@@ -39,11 +50,20 @@ export async function GET() {
 
     const payload = (await response.json()) as unknown;
 
-    if (!isAnalyticsResponse(payload)) {
+    if (!isBackendAnalyticsResponse(payload)) {
       throw new Error("Upstream analytics payload was invalid");
     }
 
-    return NextResponse.json(payload, { status: 200 });
+    const mappedResponse: AnalyticsApiResponse = {
+      analytics: {
+        activeTutors: payload.kpis.totalTutors || 0,
+        sessionsBooked: payload.kpis.totalBookings || 0,
+        avgRating: payload.kpis.avgRating || 0,
+        totalReviews: payload.kpis.totalReviews || 0,
+      },
+    };
+
+    return NextResponse.json(mappedResponse, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { message: "Analytics data is temporarily unavailable" },
